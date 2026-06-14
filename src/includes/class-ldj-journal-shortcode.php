@@ -23,6 +23,7 @@ class LDJ_Journal_Shortcode {
 			'show_save'    => sanitize_text_field( $_POST['show_save'] ?? '1' ),
 			'show_refresh' => sanitize_text_field( $_POST['show_refresh'] ?? '1' ),
 			'heading'      => wp_kses_post( $_POST['heading'] ?? '' ),
+			'instructions' => wp_kses_post( $_POST['instructions'] ?? '' ),
 		);
 
 		$html = self::render_inner( $atts );
@@ -40,6 +41,7 @@ class LDJ_Journal_Shortcode {
 			'show_save'    => '1',
 			'show_refresh' => '1',
 			'heading'      => '',
+			'instructions' => '',
 		), $atts, 'ldj_journal' );
 
 		$user_id = get_current_user_id();
@@ -95,6 +97,7 @@ class LDJ_Journal_Shortcode {
 		$show_save    = filter_var( $atts['show_save'] ?? '1', FILTER_VALIDATE_BOOLEAN );
 		$show_refresh = filter_var( $atts['show_refresh'] ?? '1', FILTER_VALIDATE_BOOLEAN );
 		$heading      = wp_kses_post( $atts['heading'] );
+		$instructions = wp_kses_post( $atts['instructions'] ?? '' );
 
 		if ( ! $user_id || ! $course_id ) {
 			return '';
@@ -145,6 +148,7 @@ class LDJ_Journal_Shortcode {
 			. ' data-show-save="' . esc_attr( $show_save ? '1' : '0' ) . '"'
 			. ' data-show-refresh="' . esc_attr( $show_refresh ? '1' : '0' ) . '"'
 			. ' data-heading="' . esc_attr( $heading ) . '"'
+			. ' data-instructions="' . esc_attr( $instructions ) . '"'
 			. '>';
 
 		$output .= '<div class="ldj-journal-print-header">';
@@ -159,6 +163,14 @@ class LDJ_Journal_Shortcode {
 
 		if ( ! empty( $heading ) ) {
 			$output .= '<h3 class="ldj-journal-heading">' . $heading . '</h3>';
+		}
+
+		if ( ! empty( $instructions ) ) {
+			$output .= '<p class="ldj-group-instructions">' . $instructions . '</p>';
+		}
+
+		if ( ! empty( $heading ) || ! empty( $instructions ) ) {
+			$output .= '<hr class="ldj-group-divider">';
 		}
 
 		if ( $show_title || $show_student ) {
@@ -199,6 +211,7 @@ class LDJ_Journal_Shortcode {
 						. esc_html__( '(edited)', 'lesson-journal' )
 						. '</span>';
 				}
+				$output .= ' <span class="ldj-journal-topic">| ' . esc_html( $lesson_title ) . '</span>';
 				$output .= '</div>';
 				$output .= '</div>';
 

@@ -10,6 +10,8 @@ registerBlockType( 'ldj/prompt-group', {
 			className: 'ldj-group ldj-group--editor',
 		} );
 
+		const hasHeader = attributes.heading || attributes.instructions;
+
 		return (
 			<>
 				<InspectorControls>
@@ -39,14 +41,6 @@ registerBlockType( 'ldj/prompt-group', {
 					</PanelBody>
 				</InspectorControls>
 				<div { ...blockProps }>
-					<div className="ldj-group-label">
-						{ __( 'Journal Prompt Group', 'lesson-journal' ) }
-						{ attributes.required && (
-							<span className="ldj-required-badge">
-								{ __( 'Required', 'lesson-journal' ) }
-							</span>
-						) }
-					</div>
 					<RichText
 						tagName="h3"
 						className="ldj-group-heading"
@@ -55,6 +49,15 @@ registerBlockType( 'ldj/prompt-group', {
 						onChange={ ( val ) => setAttributes( { heading: val } ) }
 						allowedFormats={ [ 'core/bold', 'core/italic' ] }
 					/>
+					<RichText
+						tagName="p"
+						className="ldj-group-instructions"
+						placeholder={ __( 'Add instructions (optional)…', 'lesson-journal' ) }
+						value={ attributes.instructions }
+						onChange={ ( val ) => setAttributes( { instructions: val } ) }
+						allowedFormats={ [ 'core/bold', 'core/italic' ] }
+					/>
+					{ hasHeader && <hr className="ldj-group-divider" /> }
 					<InnerBlocks
 						allowedBlocks={ [ 'ldj/prompt' ] }
 						renderAppender={ InnerBlocks.ButtonBlockAppender }

@@ -48,6 +48,14 @@ wp_localize_script( 'ldj-frontend', 'ldjData', array(
 		<h3 class="ldj-group-heading"><?php echo wp_kses_post( $attributes['heading'] ); ?></h3>
 	<?php endif; ?>
 
+	<?php if ( ! empty( $attributes['instructions'] ) ) : ?>
+		<p class="ldj-group-instructions"><?php echo wp_kses_post( $attributes['instructions'] ); ?></p>
+	<?php endif; ?>
+
+	<?php if ( ! empty( $attributes['heading'] ) || ! empty( $attributes['instructions'] ) ) : ?>
+		<hr class="ldj-group-divider">
+	<?php endif; ?>
+
 	<?php echo $content; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped ?>
 
 	<?php if ( $per_page > 0 ) : ?>

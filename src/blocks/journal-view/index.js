@@ -9,7 +9,7 @@ import { __ } from '@wordpress/i18n';
 registerBlockType( 'ldj/journal-view', {
 	edit( { attributes, setAttributes } ) {
 		const blockProps = useBlockProps( { className: 'ldj-journal-view--editor' } );
-		const { courseId, lessonId, showTitle, showStudent, showPrint, showSave, showRefresh, heading } = attributes;
+		const { courseId, lessonId, showTitle, showStudent, showPrint, showSave, showRefresh, heading, instructions } = attributes;
 
 		const [ courses, setCourses ] = useState( [] );
 		const [ lessons, setLessons ] = useState( [] );
@@ -53,6 +53,8 @@ registerBlockType( 'ldj/journal-view', {
 				? courseName + ' → ' + lessonName
 				: courseName + ' — ' + __( 'all lessons', 'lesson-journal' );
 		}
+
+		const hasHeader = heading || instructions;
 
 		return (
 			<>
@@ -123,6 +125,15 @@ registerBlockType( 'ldj/journal-view', {
 						onChange={ ( val ) => setAttributes( { heading: val } ) }
 						allowedFormats={ [ 'core/bold', 'core/italic' ] }
 					/>
+					<RichText
+						tagName="p"
+						className="ldj-group-instructions"
+						placeholder={ __( 'Add instructions (optional)…', 'lesson-journal' ) }
+						value={ instructions }
+						onChange={ ( val ) => setAttributes( { instructions: val } ) }
+						allowedFormats={ [ 'core/bold', 'core/italic' ] }
+					/>
+					{ hasHeader && <hr className="ldj-group-divider" /> }
 					<div className="ldj-journal-view-placeholder">
 						<span className="dashicons dashicons-media-text"></span>
 						<h4>{ __( 'Journal View', 'lesson-journal' ) }</h4>

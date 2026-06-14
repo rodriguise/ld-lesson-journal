@@ -20,11 +20,19 @@
 		"perPage": {
 			"type": "number",
 			"default": 0
+		},
+		"instructions": {
+			"type": "string",
+			"default": ""
 		}
 	},
 	"supports": {
 		"align": [ "wide", "full" ],
-		"html": false
+		"html": false,
+		"typography": {
+			"fontSize": true,
+			"lineHeight": true
+		}
 	},
 	"editorScript": "file:../../build/prompt-group/index.js",
 	"render": "file:./render.php"

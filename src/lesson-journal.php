@@ -59,6 +59,20 @@ function lesson_journal_init() {
 }
 add_action( 'init', 'lesson_journal_init' );
 
+function lesson_journal_editor_typography() {
+	add_theme_support( 'custom-line-height' );
+	if ( ! current_theme_supports( 'editor-font-sizes' ) ) {
+		add_theme_support( 'editor-font-sizes', array(
+			array( 'name' => __( 'Small', 'lesson-journal' ), 'slug' => 'small', 'size' => 13 ),
+			array( 'name' => __( 'Normal', 'lesson-journal' ), 'slug' => 'normal', 'size' => 16 ),
+			array( 'name' => __( 'Medium', 'lesson-journal' ), 'slug' => 'medium', 'size' => 20 ),
+			array( 'name' => __( 'Large', 'lesson-journal' ), 'slug' => 'large', 'size' => 28 ),
+			array( 'name' => __( 'Extra Large', 'lesson-journal' ), 'slug' => 'x-large', 'size' => 36 ),
+		) );
+	}
+}
+add_action( 'after_setup_theme', 'lesson_journal_editor_typography' );
+
 function lesson_journal_register_blocks() {
 	if ( ! lesson_journal_learndash_active() ) {
 		return;

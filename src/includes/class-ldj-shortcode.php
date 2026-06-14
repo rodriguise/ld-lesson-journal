@@ -51,9 +51,10 @@ class LDJ_Shortcode {
 
 	public static function render_group( $atts, $content = '' ) {
 		$atts = shortcode_atts( array(
-			'required' => '0',
-			'heading'  => '',
-			'per_page' => '0',
+			'required'     => '0',
+			'heading'      => '',
+			'instructions' => '',
+			'per_page'     => '0',
 		), $atts, 'ldj_group' );
 
 		$required  = filter_var( $atts['required'], FILTER_VALIDATE_BOOLEAN );
@@ -86,6 +87,14 @@ class LDJ_Shortcode {
 
 		if ( ! empty( $atts['heading'] ) ) {
 			$output .= '<h3 class="ldj-group-heading">' . wp_kses_post( $atts['heading'] ) . '</h3>';
+		}
+
+		if ( ! empty( $atts['instructions'] ) ) {
+			$output .= '<p class="ldj-group-instructions">' . wp_kses_post( $atts['instructions'] ) . '</p>';
+		}
+
+		if ( ! empty( $atts['heading'] ) || ! empty( $atts['instructions'] ) ) {
+			$output .= '<hr class="ldj-group-divider">';
 		}
 
 		$output .= $inner;

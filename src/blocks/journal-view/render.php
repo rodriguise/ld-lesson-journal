@@ -12,9 +12,10 @@ $show_print   = isset( $attributes['showPrint'] ) ? ( $attributes['showPrint'] ?
 $show_save    = isset( $attributes['showSave'] ) ? ( $attributes['showSave'] ? '1' : '0' ) : '1';
 $show_refresh = isset( $attributes['showRefresh'] ) ? ( $attributes['showRefresh'] ? '1' : '0' ) : '1';
 $heading      = $attributes['heading'] ?? '';
+$instructions = $attributes['instructions'] ?? '';
 
 $shortcode = sprintf(
-	'[ldj_journal course_id="%d" lesson_id="%d" show_title="%s" show_student="%s" show_print="%s" show_save="%s" show_refresh="%s" heading="%s"]',
+	'[ldj_journal course_id="%d" lesson_id="%d" show_title="%s" show_student="%s" show_print="%s" show_save="%s" show_refresh="%s" heading="%s" instructions="%s"]',
 	$course_id,
 	$lesson_id,
 	$show_title,
@@ -22,7 +23,8 @@ $shortcode = sprintf(
 	$show_print,
 	$show_save,
 	$show_refresh,
-	esc_attr( $heading )
+	esc_attr( $heading ),
+	esc_attr( $instructions )
 );
 
 echo do_shortcode( $shortcode );

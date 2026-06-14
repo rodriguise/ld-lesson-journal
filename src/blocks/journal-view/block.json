@@ -40,11 +40,19 @@
 		"heading": {
 			"type": "string",
 			"default": ""
+		},
+		"instructions": {
+			"type": "string",
+			"default": ""
 		}
 	},
 	"supports": {
 		"align": [ "wide", "full" ],
-		"html": false
+		"html": false,
+		"typography": {
+			"fontSize": true,
+			"lineHeight": true
+		}
 	},
 	"editorScript": "file:../../build/journal-view/index.js",
 	"editorStyle": "file:../../build/journal-view/index.css",

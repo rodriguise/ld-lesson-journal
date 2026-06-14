@@ -6,6 +6,17 @@
 	border-radius: 8px;
 }
 
+.ldj-journal-view--editor .ldj-group-instructions {
+	font-size: 1rem;
+	line-height: 1.6;
+}
+
+.ldj-journal-view--editor .ldj-group-divider {
+	border: none;
+	border-top: 1px solid #93c5fd;
+	margin: 1em 0;
+}
+
 .ldj-journal-view-placeholder .dashicons {
 	font-size: 32px;
 	width: 32px;
