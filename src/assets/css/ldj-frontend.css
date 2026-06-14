@@ -61,6 +61,14 @@
 	text-align: right;
 }
 
+.ldj-chars-below-min {
+	color: #dc2626;
+}
+
+.ldj-min-chars-label {
+	color: #9ca3af;
+}
+
 /* === Completed Entry Display === */
 
 .ldj-completed-entry {

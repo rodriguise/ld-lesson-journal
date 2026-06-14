@@ -84,7 +84,7 @@ class LDJ_Shortcode {
 
 		$output .= $inner;
 		$output .= '<div class="ldj-group-actions">';
-		$output .= '<button type="button" class="ldj-save-group">' . esc_html__( 'Save Journal', 'lesson-journal' ) . '</button>';
+		$output .= '<button type="button" class="ldj-save-group">' . esc_html__( 'Save', 'lesson-journal' ) . '</button>';
 		$output .= '</div>';
 		$output .= '<div class="ldj-feedback" aria-live="polite"></div>';
 		$output .= '</div>';
@@ -117,6 +117,7 @@ class LDJ_Shortcode {
 
 		$rows        = (int) get_post_meta( $prompt_id, '_ldj_rows', true ) ?: 5;
 		$placeholder = get_post_meta( $prompt_id, '_ldj_placeholder', true );
+		$min_chars   = (int) get_post_meta( $prompt_id, '_ldj_min_chars', true );
 		$max_chars   = (int) get_post_meta( $prompt_id, '_ldj_max_chars', true );
 
 		$existing   = $user_id ? LDJ_Entry::get( $prompt_id, $user_id, $lesson_id ) : null;
@@ -138,7 +139,14 @@ class LDJ_Shortcode {
 
 		$textarea_style = $has_entry ? ' style="display:none"' : '';
 
-		$output .= '<div class="ldj-textarea-wrap"' . $textarea_style . '>';
+		$output .= '<div class="ldj-textarea-wrap"' . $textarea_style;
+		if ( $min_chars > 0 ) {
+			$output .= ' data-min-chars="' . esc_attr( $min_chars ) . '"';
+		}
+		if ( $max_chars > 0 ) {
+			$output .= ' data-max-chars="' . esc_attr( $max_chars ) . '"';
+		}
+		$output .= '>';
 		$output .= '<textarea class="ldj-textarea" rows="' . esc_attr( $rows ) . '"';
 
 		if ( $placeholder ) {
@@ -151,9 +159,14 @@ class LDJ_Shortcode {
 
 		$output .= '>' . esc_textarea( $entry_text ) . '</textarea>';
 
+		$output .= '<div class="ldj-char-count"><span class="ldj-current-chars">' . mb_strlen( $entry_text ) . '</span>';
 		if ( $max_chars > 0 ) {
-			$output .= '<div class="ldj-char-count"><span class="ldj-current-chars">' . mb_strlen( $entry_text ) . '</span> / ' . esc_html( $max_chars ) . '</div>';
+			$output .= ' / ' . esc_html( $max_chars );
 		}
+		if ( $min_chars > 0 ) {
+			$output .= ' <span class="ldj-min-chars-label">' . sprintf( esc_html__( '(min %d)', 'lesson-journal' ), $min_chars ) . '</span>';
+		}
+		$output .= '</div>';
 
 		$output .= '</div>';
 		$output .= '</div>';

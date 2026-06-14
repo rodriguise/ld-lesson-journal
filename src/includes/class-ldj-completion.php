@@ -29,17 +29,13 @@ class LDJ_Completion {
 			return $mark_complete_html;
 		}
 
-		$message = '<p class="ldj-completion-message">'
-			. esc_html__( 'Complete all journal entries to continue.', 'lesson-journal' )
-			. '</p>';
-
 		$mark_complete_html = preg_replace(
 			'/(class=["\'][^"\']*learndash_mark_complete_button[^"\']*["\'])/',
 			'$1 disabled',
 			$mark_complete_html
 		);
 
-		return $message . $mark_complete_html;
+		return $mark_complete_html;
 	}
 
 	public static function gate_process_complete( $process, $post ) {

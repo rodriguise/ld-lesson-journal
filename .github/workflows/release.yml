@@ -30,7 +30,11 @@ jobs:
 
       - name: Extract version from tag
         id: version
-        run: echo "tag=${GITHUB_REF#refs/tags/}" >> "$GITHUB_OUTPUT"
+        run: |
+          TAG="${GITHUB_REF#refs/tags/}"
+          VERSION="${TAG#v}"
+          echo "tag=$TAG" >> "$GITHUB_OUTPUT"
+          echo "version=$VERSION" >> "$GITHUB_OUTPUT"
 
       - name: Detect prerelease
         id: prerelease
@@ -41,6 +45,12 @@ jobs:
           else
             echo "is_prerelease=false" >> "$GITHUB_OUTPUT"
           fi
+
+      - name: Stamp plugin version
+        run: |
+          VERSION="${{ steps.version.outputs.version }}"
+          sed -i "s/ \* Version:.*/ * Version:           $VERSION/" src/lesson-journal.php
+          sed -i "s/define( 'LESSON_JOURNAL_VERSION', '.*' );/define( 'LESSON_JOURNAL_VERSION', '$VERSION' );/" src/lesson-journal.php
 
       - name: Package plugin
         run: |

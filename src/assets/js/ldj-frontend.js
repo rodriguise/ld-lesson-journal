@@ -11,13 +11,26 @@
 	} );
 
 	function initCharCounters() {
-		document.querySelectorAll( '.ldj-textarea' ).forEach( function ( textarea ) {
-			var counter = textarea.closest( '.ldj-textarea-wrap' )?.querySelector( '.ldj-current-chars' );
-			if ( ! counter ) return;
+		document.querySelectorAll( '.ldj-textarea-wrap' ).forEach( function ( wrap ) {
+			var textarea = wrap.querySelector( '.ldj-textarea' );
+			var counter  = wrap.querySelector( '.ldj-current-chars' );
+			if ( ! textarea || ! counter ) return;
 
-			textarea.addEventListener( 'input', function () {
-				counter.textContent = textarea.value.length;
-			} );
+			var minChars = parseInt( wrap.dataset.minChars, 10 ) || 0;
+
+			function update() {
+				var len = textarea.value.length;
+				counter.textContent = len;
+
+				if ( minChars > 0 && len > 0 && len < minChars ) {
+					counter.classList.add( 'ldj-chars-below-min' );
+				} else {
+					counter.classList.remove( 'ldj-chars-below-min' );
+				}
+			}
+
+			textarea.addEventListener( 'input', update );
+			update();
 		} );
 	}
 
@@ -75,7 +88,7 @@
 		var saveBtn   = group.querySelector( '.ldj-save-group' );
 		var cancelBtn = group.querySelector( '.ldj-cancel-edit' );
 
-		if ( saveBtn ) saveBtn.textContent = 'Save Journal';
+		if ( saveBtn ) saveBtn.textContent = 'Save';
 		if ( cancelBtn ) cancelBtn.remove();
 	}
 
@@ -169,7 +182,7 @@
 			} )
 			.finally( function () {
 				btn.disabled    = false;
-				btn.textContent = 'Save Journal';
+				btn.textContent = 'Save';
 
 				var cancelBtn = group.querySelector( '.ldj-cancel-edit' );
 				if ( cancelBtn ) cancelBtn.remove();

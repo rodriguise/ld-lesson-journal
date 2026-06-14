@@ -24,6 +24,7 @@ $user_id   = get_current_user_id();
 
 $rows        = (int) get_post_meta( $prompt_id, '_ldj_rows', true ) ?: 5;
 $placeholder = get_post_meta( $prompt_id, '_ldj_placeholder', true );
+$min_chars   = (int) get_post_meta( $prompt_id, '_ldj_min_chars', true );
 $max_chars   = (int) get_post_meta( $prompt_id, '_ldj_max_chars', true );
 
 $existing   = $user_id ? LDJ_Entry::get( $prompt_id, $user_id, $lesson_id ) : null;
@@ -46,7 +47,9 @@ $has_entry  = ! empty( $entry_text );
 		</div>
 	<?php endif; ?>
 
-	<div class="ldj-textarea-wrap"<?php echo $has_entry ? ' style="display:none"' : ''; ?>>
+	<div class="ldj-textarea-wrap"<?php echo $has_entry ? ' style="display:none"' : ''; ?>
+		<?php if ( $min_chars > 0 ) : ?> data-min-chars="<?php echo esc_attr( $min_chars ); ?>"<?php endif; ?>
+		<?php if ( $max_chars > 0 ) : ?> data-max-chars="<?php echo esc_attr( $max_chars ); ?>"<?php endif; ?>>
 		<textarea
 			class="ldj-textarea"
 			rows="<?php echo esc_attr( $rows ); ?>"
@@ -54,10 +57,11 @@ $has_entry  = ! empty( $entry_text );
 			<?php if ( $max_chars > 0 ) : ?>maxlength="<?php echo esc_attr( $max_chars ); ?>"<?php endif; ?>
 		><?php echo esc_textarea( $entry_text ); ?></textarea>
 
-		<?php if ( $max_chars > 0 ) : ?>
-			<div class="ldj-char-count">
-				<span class="ldj-current-chars"><?php echo mb_strlen( $entry_text ); ?></span> / <?php echo esc_html( $max_chars ); ?>
-			</div>
-		<?php endif; ?>
+		<div class="ldj-char-count">
+			<span class="ldj-current-chars"><?php echo mb_strlen( $entry_text ); ?></span><?php if ( $max_chars > 0 ) : ?> / <?php echo esc_html( $max_chars ); ?><?php endif; ?>
+			<?php if ( $min_chars > 0 ) : ?>
+				<span class="ldj-min-chars-label"><?php printf( esc_html__( '(min %d)', 'lesson-journal' ), $min_chars ); ?></span>
+			<?php endif; ?>
+		</div>
 	</div>
 </div>

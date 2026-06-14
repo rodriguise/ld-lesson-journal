@@ -41,11 +41,19 @@ class LDJ_Ajax {
 				continue;
 			}
 
+			$min_chars = (int) get_post_meta( $entry['prompt_id'], '_ldj_min_chars', true );
 			$max_chars = (int) get_post_meta( $entry['prompt_id'], '_ldj_max_chars', true );
+
+			if ( $min_chars > 0 && mb_strlen( $entry['entry_text'] ) > 0 && mb_strlen( $entry['entry_text'] ) < $min_chars ) {
+				$errors[] = sprintf(
+					__( '"%1$s" must be at least %2$d characters.', 'lesson-journal' ),
+					get_the_title( $entry['prompt_id'] ),
+					$min_chars
+				);
+			}
 
 			if ( $max_chars > 0 && mb_strlen( $entry['entry_text'] ) > $max_chars ) {
 				$errors[] = sprintf(
-					/* translators: 1: prompt title, 2: max characters */
 					__( '"%1$s" exceeds the %2$d character limit.', 'lesson-journal' ),
 					get_the_title( $entry['prompt_id'] ),
 					$max_chars
