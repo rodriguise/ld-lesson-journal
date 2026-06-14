@@ -5,6 +5,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 }
 
 $required  = ! empty( $attributes['required'] );
+$per_page  = absint( $attributes['perPage'] ?? 0 );
 $lesson_id = get_the_ID();
 $post_type = get_post_type( $lesson_id );
 $user_id   = get_current_user_id();
@@ -40,7 +41,8 @@ wp_localize_script( 'ldj-frontend', 'ldjData', array(
 ?>
 <div <?php echo get_block_wrapper_attributes( array( 'class' => 'ldj-group' ) ); ?>
 	data-lesson-id="<?php echo esc_attr( $lesson_id ); ?>"
-	data-required="<?php echo esc_attr( $required ? '1' : '0' ); ?>">
+	data-required="<?php echo esc_attr( $required ? '1' : '0' ); ?>"
+	<?php if ( $per_page > 0 ) : ?>data-per-page="<?php echo esc_attr( $per_page ); ?>"<?php endif; ?>>
 
 	<?php if ( ! empty( $attributes['heading'] ) ) : ?>
 		<h3 class="ldj-group-heading"><?php echo wp_kses_post( $attributes['heading'] ); ?></h3>
@@ -48,8 +50,15 @@ wp_localize_script( 'ldj-frontend', 'ldjData', array(
 
 	<?php echo $content; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped ?>
 
+	<?php if ( $per_page > 0 ) : ?>
+	<div class="ldj-group-pagination">
+		<button type="button" class="ldj-group-prev" disabled>&larr; <?php esc_html_e( 'Previous', 'lesson-journal' ); ?></button>
+		<span class="ldj-group-page-info"></span>
+		<button type="button" class="ldj-group-next"><?php esc_html_e( 'Next', 'lesson-journal' ); ?> &rarr;</button>
+	</div>
+	<?php endif; ?>
 	<div class="ldj-group-actions">
-		<button type="button" class="ldj-save-group"><?php esc_html_e( 'Save Journal', 'lesson-journal' ); ?></button>
+		<button type="button" class="ldj-save-group"><?php esc_html_e( 'Submit', 'lesson-journal' ); ?></button>
 	</div>
 	<div class="ldj-feedback" aria-live="polite"></div>
 </div>

@@ -9,15 +9,19 @@ $lesson_id    = absint( $attributes['lessonId'] ?? 0 );
 $show_title   = ! empty( $attributes['showTitle'] ) ? '1' : '0';
 $show_student = ! empty( $attributes['showStudent'] ) ? '1' : '0';
 $show_print   = isset( $attributes['showPrint'] ) ? ( $attributes['showPrint'] ? '1' : '0' ) : '1';
+$show_save    = isset( $attributes['showSave'] ) ? ( $attributes['showSave'] ? '1' : '0' ) : '1';
+$show_refresh = isset( $attributes['showRefresh'] ) ? ( $attributes['showRefresh'] ? '1' : '0' ) : '1';
 $heading      = $attributes['heading'] ?? '';
 
 $shortcode = sprintf(
-	'[ldj_journal course_id="%d" lesson_id="%d" show_title="%s" show_student="%s" show_print="%s" heading="%s"]',
+	'[ldj_journal course_id="%d" lesson_id="%d" show_title="%s" show_student="%s" show_print="%s" show_save="%s" show_refresh="%s" heading="%s"]',
 	$course_id,
 	$lesson_id,
 	$show_title,
 	$show_student,
 	$show_print,
+	$show_save,
+	$show_refresh,
 	esc_attr( $heading )
 );
 

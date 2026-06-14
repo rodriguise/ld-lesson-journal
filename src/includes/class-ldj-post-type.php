@@ -26,8 +26,8 @@ class LDJ_Post_Type {
 			'search_items'       => __( 'Search Journal Prompts', 'lesson-journal' ),
 			'not_found'          => __( 'No journal prompts found.', 'lesson-journal' ),
 			'not_found_in_trash' => __( 'No journal prompts found in Trash.', 'lesson-journal' ),
-			'all_items'          => __( 'Journal Prompts', 'lesson-journal' ),
-			'menu_name'          => __( 'Journal Prompts', 'lesson-journal' ),
+			'all_items'          => __( 'Student Journal', 'lesson-journal' ),
+			'menu_name'          => __( 'Student Journal', 'lesson-journal' ),
 		);
 
 		register_post_type( 'ldj_prompt', array(

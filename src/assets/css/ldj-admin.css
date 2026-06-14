@@ -6,3 +6,20 @@
 	line-height: 1.6;
 	font-size: 14px;
 }
+
+/* Tab header injected via all_admin_notices on the CPT list page */
+.ldj-tab-header {
+	margin-bottom: 0;
+	padding-bottom: 0;
+}
+
+.ldj-tab-header .nav-tab-wrapper {
+	margin-bottom: 0;
+}
+
+/* Hide the default CPT heading — our tab header replaces it */
+body.post-type-ldj_prompt .wrap:not(.ldj-tab-header) > .wp-heading-inline:first-child,
+body.post-type-ldj_prompt .wrap:not(.ldj-tab-header) > .wp-heading-inline:first-child + .page-title-action,
+body.post-type-ldj_prompt .wrap:not(.ldj-tab-header) > .wp-header-end:first-of-type {
+	display: none !important;
+}

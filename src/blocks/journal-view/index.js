@@ -9,7 +9,7 @@ import { __ } from '@wordpress/i18n';
 registerBlockType( 'ldj/journal-view', {
 	edit( { attributes, setAttributes } ) {
 		const blockProps = useBlockProps( { className: 'ldj-journal-view--editor' } );
-		const { courseId, lessonId, showTitle, showStudent, showPrint, heading } = attributes;
+		const { courseId, lessonId, showTitle, showStudent, showPrint, showSave, showRefresh, heading } = attributes;
 
 		const [ courses, setCourses ] = useState( [] );
 		const [ lessons, setLessons ] = useState( [] );
@@ -101,6 +101,16 @@ registerBlockType( 'ldj/journal-view', {
 							label={ __( 'Show print button', 'lesson-journal' ) }
 							checked={ showPrint }
 							onChange={ ( val ) => setAttributes( { showPrint: val } ) }
+						/>
+						<ToggleControl
+							label={ __( 'Show save as PDF button', 'lesson-journal' ) }
+							checked={ showSave }
+							onChange={ ( val ) => setAttributes( { showSave: val } ) }
+						/>
+						<ToggleControl
+							label={ __( 'Show refresh button', 'lesson-journal' ) }
+							checked={ showRefresh }
+							onChange={ ( val ) => setAttributes( { showRefresh: val } ) }
 						/>
 					</PanelBody>
 				</InspectorControls>

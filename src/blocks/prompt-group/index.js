@@ -1,7 +1,7 @@
 import './editor.css';
 import { registerBlockType } from '@wordpress/blocks';
 import { InnerBlocks, InspectorControls, useBlockProps, RichText } from '@wordpress/block-editor';
-import { PanelBody, ToggleControl } from '@wordpress/components';
+import { PanelBody, ToggleControl, RangeControl } from '@wordpress/components';
 import { __ } from '@wordpress/i18n';
 
 registerBlockType( 'ldj/prompt-group', {
@@ -22,6 +22,19 @@ registerBlockType( 'ldj/prompt-group', {
 							}
 							checked={ attributes.required }
 							onChange={ ( val ) => setAttributes( { required: val } ) }
+						/>
+						<RangeControl
+							label={ __( 'Prompts per page', 'lesson-journal' ) }
+							help={ attributes.perPage > 0
+								? __( 'Shows pagination controls.', 'lesson-journal' )
+								: __( 'All prompts shown at once.', 'lesson-journal' )
+							}
+							value={ attributes.perPage }
+							onChange={ ( val ) => setAttributes( { perPage: val } ) }
+							min={ 0 }
+							max={ 20 }
+							allowReset
+							resetFallbackValue={ 0 }
 						/>
 					</PanelBody>
 				</InspectorControls>

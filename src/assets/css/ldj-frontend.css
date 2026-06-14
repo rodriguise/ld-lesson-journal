@@ -82,6 +82,8 @@
 .ldj-entry-display {
 	margin-bottom: 0.5em;
 	white-space: pre-wrap;
+	overflow-wrap: break-word;
+	word-break: break-word;
 }
 
 .ldj-edit-entry,
@@ -118,6 +120,48 @@
 	font-size: 1.2em;
 	font-weight: 600;
 	color: #1f2937;
+}
+
+/* === Group Pagination === */
+
+.ldj-group-pagination {
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	gap: 0.75em;
+	margin-top: 1em;
+	padding-top: 0.75em;
+	border-top: 1px solid #e5e7eb;
+}
+
+.ldj-group-prev,
+.ldj-group-next {
+	display: inline-block;
+	padding: 0.4em 1em;
+	background: #f3f4f6;
+	border: 1px solid #d1d5db;
+	border-radius: 6px;
+	font-size: 0.8em;
+	cursor: pointer;
+	transition: background 0.2s;
+}
+
+.ldj-group-prev:hover:not(:disabled),
+.ldj-group-next:hover:not(:disabled) {
+	background: #e5e7eb;
+}
+
+.ldj-group-prev:disabled,
+.ldj-group-next:disabled {
+	opacity: 0.4;
+	cursor: not-allowed;
+}
+
+.ldj-group-page-info {
+	font-size: 0.8em;
+	color: #6b7280;
+	min-width: 3em;
+	text-align: center;
 }
 
 /* === Group Actions === */
@@ -351,6 +395,7 @@
 	gap: 0.25em;
 }
 
+.ldj-journal-refresh-btn,
 .ldj-journal-save-btn,
 .ldj-print-btn {
 	display: inline-flex;
@@ -368,6 +413,7 @@
 	position: relative;
 }
 
+.ldj-journal-refresh-btn:hover,
 .ldj-journal-save-btn:hover,
 .ldj-print-btn:hover {
 	background: #f3f4f6;
@@ -375,6 +421,7 @@
 	color: #374151;
 }
 
+.ldj-journal-refresh-btn .dashicons,
 .ldj-journal-save-btn .dashicons,
 .ldj-print-btn .dashicons {
 	font-size: 18px;

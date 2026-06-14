@@ -12,7 +12,10 @@ class LDJ_Admin_Entries {
 
 	public static function register() {
 		add_action( 'admin_menu', array( __CLASS__, 'add_menu_page' ), 30 );
+		add_action( 'admin_menu', array( __CLASS__, 'hide_submenu' ), 31 );
 		add_action( 'admin_enqueue_scripts', array( __CLASS__, 'enqueue_assets' ) );
+		add_action( 'all_admin_notices', array( __CLASS__, 'render_tab_header' ) );
+		add_filter( 'submenu_file', array( __CLASS__, 'highlight_submenu' ), 10, 2 );
 	}
 
 	public static function add_menu_page() {
@@ -26,8 +29,27 @@ class LDJ_Admin_Entries {
 		);
 	}
 
+	public static function hide_submenu() {
+		add_action( 'admin_head', function () {
+			echo '<style>#adminmenu a[href="admin.php?page=ldj-entries"] { display: none !important; }</style>';
+		} );
+	}
+
+	public static function highlight_submenu( $submenu_file, $parent_file ) {
+		$screen = get_current_screen();
+		if ( $screen && $screen->id === 'learndash-lms_page_ldj-entries' ) {
+			return 'edit.php?post_type=ldj_prompt';
+		}
+		return $submenu_file;
+	}
+
 	public static function enqueue_assets( $hook ) {
-		if ( $hook !== 'learndash-lms_page_ldj-entries' ) {
+		$screen = get_current_screen();
+
+		$is_entries = $hook === 'learndash-lms_page_ldj-entries';
+		$is_prompts = $screen && $screen->post_type === 'ldj_prompt' && $screen->base === 'edit';
+
+		if ( ! $is_entries && ! $is_prompts ) {
 			return;
 		}
 
@@ -38,7 +60,53 @@ class LDJ_Admin_Entries {
 			LESSON_JOURNAL_VERSION
 		);
 
-		add_thickbox();
+		if ( $is_entries ) {
+			add_thickbox();
+		}
+	}
+
+	public static function render_tab_header() {
+		$screen = get_current_screen();
+		if ( ! $screen ) {
+			return;
+		}
+
+		if ( $screen->post_type !== 'ldj_prompt' || $screen->base !== 'edit' ) {
+			return;
+		}
+
+		echo '<div class="wrap ldj-tab-header">';
+		echo '<h1 class="wp-heading-inline">' . esc_html__( 'Student Journal', 'lesson-journal' ) . '</h1>';
+		echo '<a href="' . esc_url( admin_url( 'post-new.php?post_type=ldj_prompt' ) ) . '" class="page-title-action">';
+		echo esc_html__( 'Add New Prompt', 'lesson-journal' );
+		echo '</a>';
+		echo '<hr class="wp-header-end">';
+		self::output_tabs( 'prompts' );
+		echo '</div>';
+	}
+
+	private static function output_tabs( $active ) {
+		$tabs = array(
+			'prompts' => array(
+				'label' => __( 'Prompts', 'lesson-journal' ),
+				'url'   => admin_url( 'edit.php?post_type=ldj_prompt' ),
+			),
+			'entries' => array(
+				'label' => __( 'Entries', 'lesson-journal' ),
+				'url'   => admin_url( 'admin.php?page=ldj-entries' ),
+			),
+		);
+
+		echo '<nav class="nav-tab-wrapper ldj-nav-tabs">';
+		foreach ( $tabs as $key => $tab ) {
+			printf(
+				'<a href="%s" class="nav-tab%s">%s</a>',
+				esc_url( $tab['url'] ),
+				$key === $active ? ' nav-tab-active' : '',
+				esc_html( $tab['label'] )
+			);
+		}
+		echo '</nav>';
 	}
 
 	public static function render_page() {
@@ -46,8 +114,9 @@ class LDJ_Admin_Entries {
 		$table->prepare_items();
 		?>
 		<div class="wrap">
-			<h1 class="wp-heading-inline"><?php esc_html_e( 'Journal Entries', 'lesson-journal' ); ?></h1>
+			<h1 class="wp-heading-inline"><?php esc_html_e( 'Student Journal', 'lesson-journal' ); ?></h1>
 			<hr class="wp-header-end">
+			<?php self::output_tabs( 'entries' ); ?>
 			<form method="get">
 				<input type="hidden" name="page" value="ldj-entries">
 				<?php

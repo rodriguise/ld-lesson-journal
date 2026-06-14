@@ -16,6 +16,10 @@
 		"heading": {
 			"type": "string",
 			"default": ""
+		},
+		"perPage": {
+			"type": "number",
+			"default": 0
 		}
 	},
 	"supports": {

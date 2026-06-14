@@ -53,9 +53,11 @@ class LDJ_Shortcode {
 		$atts = shortcode_atts( array(
 			'required' => '0',
 			'heading'  => '',
+			'per_page' => '0',
 		), $atts, 'ldj_group' );
 
 		$required  = filter_var( $atts['required'], FILTER_VALIDATE_BOOLEAN );
+		$per_page  = absint( $atts['per_page'] );
 		$lesson_id = get_the_ID();
 		$post_type = get_post_type( $lesson_id );
 
@@ -76,15 +78,28 @@ class LDJ_Shortcode {
 
 		$inner = do_shortcode( $content );
 
-		$output  = '<div class="ldj-group" data-lesson-id="' . esc_attr( $lesson_id ) . '" data-required="' . esc_attr( $required ? '1' : '0' ) . '">';
+		$output  = '<div class="ldj-group" data-lesson-id="' . esc_attr( $lesson_id ) . '" data-required="' . esc_attr( $required ? '1' : '0' ) . '"';
+		if ( $per_page > 0 ) {
+			$output .= ' data-per-page="' . esc_attr( $per_page ) . '"';
+		}
+		$output .= '>';
 
 		if ( ! empty( $atts['heading'] ) ) {
 			$output .= '<h3 class="ldj-group-heading">' . wp_kses_post( $atts['heading'] ) . '</h3>';
 		}
 
 		$output .= $inner;
+
+		if ( $per_page > 0 ) {
+			$output .= '<div class="ldj-group-pagination">';
+			$output .= '<button type="button" class="ldj-group-prev" disabled>&larr; ' . esc_html__( 'Previous', 'lesson-journal' ) . '</button>';
+			$output .= '<span class="ldj-group-page-info"></span>';
+			$output .= '<button type="button" class="ldj-group-next">' . esc_html__( 'Next', 'lesson-journal' ) . ' &rarr;</button>';
+			$output .= '</div>';
+		}
+
 		$output .= '<div class="ldj-group-actions">';
-		$output .= '<button type="button" class="ldj-save-group">' . esc_html__( 'Save', 'lesson-journal' ) . '</button>';
+		$output .= '<button type="button" class="ldj-save-group">' . esc_html__( 'Submit', 'lesson-journal' ) . '</button>';
 		$output .= '</div>';
 		$output .= '<div class="ldj-feedback" aria-live="polite"></div>';
 		$output .= '</div>';

@@ -29,6 +29,14 @@
 			"type": "boolean",
 			"default": true
 		},
+		"showSave": {
+			"type": "boolean",
+			"default": true
+		},
+		"showRefresh": {
+			"type": "boolean",
+			"default": true
+		},
 		"heading": {
 			"type": "string",
 			"default": ""

@@ -6,8 +6,8 @@
 		initGroupSaveButtons();
 		initEditButtons();
 		initDeleteButtons();
-		initJournalPagination();
-		initJournalPrint();
+		initGroupPagination();
+		initJournalViews();
 	} );
 
 	function initCharCounters() {
@@ -57,7 +57,7 @@
 
 		if ( group ) {
 			var saveBtn = group.querySelector( '.ldj-save-group' );
-			if ( saveBtn ) saveBtn.textContent = 'Save';
+			if ( saveBtn ) saveBtn.textContent = 'Submit';
 
 			var existing = group.querySelector( '.ldj-cancel-edit' );
 			if ( ! existing ) {
@@ -88,7 +88,7 @@
 		var saveBtn   = group.querySelector( '.ldj-save-group' );
 		var cancelBtn = group.querySelector( '.ldj-cancel-edit' );
 
-		if ( saveBtn ) saveBtn.textContent = 'Save';
+		if ( saveBtn ) saveBtn.textContent = 'Submit';
 		if ( cancelBtn ) cancelBtn.remove();
 	}
 
@@ -118,6 +118,57 @@
 			} );
 		} );
 	}
+
+	/* === Group Pagination === */
+
+	function initGroupPagination() {
+		document.querySelectorAll( '.ldj-group[data-per-page]' ).forEach( function ( group ) {
+			initSingleGroupPagination( group );
+		} );
+	}
+
+	function initSingleGroupPagination( group ) {
+		var perPage  = parseInt( group.dataset.perPage, 10 ) || 0;
+		if ( perPage <= 0 ) return;
+
+		var prompts  = group.querySelectorAll( '.ldj-prompt-wrap' );
+		var prevBtn  = group.querySelector( '.ldj-group-prev' );
+		var nextBtn  = group.querySelector( '.ldj-group-next' );
+		var pageInfo = group.querySelector( '.ldj-group-page-info' );
+
+		if ( ! prompts.length || ! prevBtn || ! nextBtn ) return;
+
+		var totalPages = Math.ceil( prompts.length / perPage );
+		var current    = 0;
+
+		function showPage( page ) {
+			current = page;
+
+			prompts.forEach( function ( wrap, i ) {
+				var start = current * perPage;
+				var end   = start + perPage;
+				wrap.style.display = ( i >= start && i < end ) ? '' : 'none';
+			} );
+
+			prevBtn.disabled = current === 0;
+			nextBtn.disabled = current >= totalPages - 1;
+			if ( pageInfo ) {
+				pageInfo.textContent = ( current + 1 ) + ' / ' + totalPages;
+			}
+		}
+
+		prevBtn.addEventListener( 'click', function () {
+			if ( current > 0 ) showPage( current - 1 );
+		} );
+
+		nextBtn.addEventListener( 'click', function () {
+			if ( current < totalPages - 1 ) showPage( current + 1 );
+		} );
+
+		showPage( 0 );
+	}
+
+	/* === Save / Delete === */
 
 	function saveGroup( group, btn ) {
 		var lessonId = group.dataset.lessonId;
@@ -173,6 +224,7 @@
 					showFeedback( feedback, ldjData.i18n.saved, 'success' );
 					switchToCompletedDisplay( group );
 					updateMarkComplete( required, true );
+					document.dispatchEvent( new CustomEvent( 'ldj:entries-changed' ) );
 				} else {
 					showFeedback( feedback, data.data?.message || ldjData.i18n.error, 'error' );
 				}
@@ -182,7 +234,7 @@
 			} )
 			.finally( function () {
 				btn.disabled    = false;
-				btn.textContent = 'Save';
+				btn.textContent = 'Submit';
 
 				var cancelBtn = group.querySelector( '.ldj-cancel-edit' );
 				if ( cancelBtn ) cancelBtn.remove();
@@ -224,6 +276,8 @@
 					if ( required ) {
 						updateMarkComplete( required, false );
 					}
+
+					document.dispatchEvent( new CustomEvent( 'ldj:entries-changed' ) );
 				}
 			} )
 			.catch( function () {
@@ -305,10 +359,79 @@
 		}, 4000 );
 	}
 
-	function initJournalPagination() {
-		var wrap = document.querySelector( '.ldj-journal-wrap' );
-		if ( ! wrap ) return;
+	/* === Journal View: refresh, pagination, print, PDF === */
 
+	function initJournalViews() {
+		document.querySelectorAll( '.ldj-journal-wrap' ).forEach( function ( wrap ) {
+			initSingleJournalView( wrap );
+		} );
+
+		document.addEventListener( 'ldj:entries-changed', function () {
+			document.querySelectorAll( '.ldj-journal-wrap[data-course-id]' ).forEach( function ( wrap ) {
+				refreshSingleJournal( wrap );
+			} );
+		} );
+	}
+
+	function refreshSingleJournal( wrap ) {
+		var formData = new FormData();
+		formData.append( 'action', 'ldj_refresh_journal' );
+		formData.append( 'nonce', ldjData.nonce );
+		formData.append( 'course_id', wrap.dataset.courseId || '0' );
+		formData.append( 'lesson_id', wrap.dataset.lessonId || '0' );
+		formData.append( 'show_title', wrap.dataset.showTitle || '0' );
+		formData.append( 'show_student', wrap.dataset.showStudent || '0' );
+		formData.append( 'show_print', wrap.dataset.showPrint || '1' );
+		formData.append( 'show_save', wrap.dataset.showSave || '1' );
+		formData.append( 'show_refresh', wrap.dataset.showRefresh || '1' );
+		formData.append( 'heading', wrap.dataset.heading || '' );
+
+		var refreshBtn = wrap.querySelector( '.ldj-journal-refresh-btn' );
+		if ( refreshBtn ) {
+			refreshBtn.disabled = true;
+			var icon = refreshBtn.querySelector( '.dashicons' );
+			if ( icon ) icon.classList.add( 'ldj-spin' );
+		}
+
+		fetch( ldjData.ajaxUrl, {
+			method: 'POST',
+			credentials: 'same-origin',
+			body: formData,
+		} )
+			.then( function ( res ) { return res.json(); } )
+			.then( function ( data ) {
+				if ( data.success && data.data.html ) {
+					var temp = document.createElement( 'div' );
+					temp.innerHTML = data.data.html;
+					var newWrap = temp.querySelector( '.ldj-journal-wrap' );
+					if ( newWrap ) {
+						wrap.innerHTML = newWrap.innerHTML;
+						for ( var i = 0; i < newWrap.attributes.length; i++ ) {
+							var attr = newWrap.attributes[ i ];
+							if ( attr.name.startsWith( 'data-' ) ) {
+								wrap.setAttribute( attr.name, attr.value );
+							}
+						}
+						initSingleJournalView( wrap );
+					}
+				}
+			} )
+			.catch( function () {} )
+			.finally( function () {
+				if ( refreshBtn ) {
+					refreshBtn.disabled = false;
+					var ic = refreshBtn.querySelector( '.dashicons' );
+					if ( ic ) ic.classList.remove( 'ldj-spin' );
+				}
+			} );
+	}
+
+	function initSingleJournalView( wrap ) {
+		initJournalPagination( wrap );
+		initJournalButtons( wrap );
+	}
+
+	function initJournalPagination( wrap ) {
 		var entries  = wrap.querySelectorAll( '.ldj-journal-entry' );
 		var sections = wrap.querySelectorAll( '.ldj-journal-section' );
 		var prevBtn  = wrap.querySelector( '.ldj-journal-prev' );
@@ -350,6 +473,50 @@
 		} );
 
 		showEntry( 0 );
+	}
+
+	function initJournalButtons( wrap ) {
+		var refreshBtn = wrap.querySelector( '.ldj-journal-refresh-btn' );
+		if ( refreshBtn ) {
+			refreshBtn.addEventListener( 'click', function () {
+				refreshSingleJournal( wrap );
+			} );
+		}
+
+		var saveBtn = wrap.querySelector( '.ldj-journal-save-btn' );
+		if ( saveBtn ) {
+			saveBtn.addEventListener( 'click', function () {
+				generatePdf( wrap, saveBtn );
+			} );
+		}
+
+		var printBtn = wrap.querySelector( '.ldj-print-btn' );
+		if ( printBtn ) {
+			printBtn.addEventListener( 'click', function () {
+				window.print();
+			} );
+		}
+
+		var originalParent, originalNext;
+
+		window.addEventListener( 'beforeprint', function () {
+			if ( ! wrap.parentNode ) return;
+			originalParent = wrap.parentNode;
+			originalNext   = wrap.nextSibling;
+			document.body.appendChild( wrap );
+			document.body.classList.add( 'ldj-printing' );
+		} );
+
+		window.addEventListener( 'afterprint', function () {
+			document.body.classList.remove( 'ldj-printing' );
+			if ( originalParent ) {
+				if ( originalNext ) {
+					originalParent.insertBefore( wrap, originalNext );
+				} else {
+					originalParent.appendChild( wrap );
+				}
+			}
+		} );
 	}
 
 	function generatePdf( wrap, btn ) {
@@ -407,45 +574,5 @@
 				if ( icon ) icon.className = 'dashicons dashicons-media-default';
 				window.print();
 			} );
-	}
-
-	function initJournalPrint() {
-		var wrap = document.querySelector( '.ldj-journal-wrap' );
-		if ( ! wrap ) return;
-
-		var printBtn = wrap.querySelector( '.ldj-print-btn' );
-		if ( printBtn ) {
-			printBtn.addEventListener( 'click', function () {
-				window.print();
-			} );
-		}
-
-		var saveBtn = wrap.querySelector( '.ldj-journal-save-btn' );
-		if ( saveBtn ) {
-			saveBtn.addEventListener( 'click', function () {
-				generatePdf( wrap, saveBtn );
-			} );
-		}
-
-		var originalParent, originalNext;
-
-		window.addEventListener( 'beforeprint', function () {
-			if ( ! wrap.parentNode ) return;
-			originalParent = wrap.parentNode;
-			originalNext   = wrap.nextSibling;
-			document.body.appendChild( wrap );
-			document.body.classList.add( 'ldj-printing' );
-		} );
-
-		window.addEventListener( 'afterprint', function () {
-			document.body.classList.remove( 'ldj-printing' );
-			if ( originalParent ) {
-				if ( originalNext ) {
-					originalParent.insertBefore( wrap, originalNext );
-				} else {
-					originalParent.appendChild( wrap );
-				}
-			}
-		} );
 	}
 } )();
