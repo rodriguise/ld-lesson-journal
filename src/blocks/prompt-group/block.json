@@ -1,0 +1,27 @@
+{
+	"$schema": "https://schemas.wp.org/trunk/block.json",
+	"apiVersion": 3,
+	"name": "ldj/prompt-group",
+	"version": "0.1.0",
+	"title": "Journal Prompt Group",
+	"category": "learndash-blocks",
+	"icon": "book-alt",
+	"description": "A group of journal prompts with a single save button.",
+	"textdomain": "lesson-journal",
+	"attributes": {
+		"required": {
+			"type": "boolean",
+			"default": false
+		},
+		"heading": {
+			"type": "string",
+			"default": ""
+		}
+	},
+	"supports": {
+		"align": [ "wide", "full" ],
+		"html": false
+	},
+	"editorScript": "file:../../build/prompt-group/index.js",
+	"render": "file:./render.php"
+}

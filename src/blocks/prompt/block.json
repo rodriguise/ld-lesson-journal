@@ -1,0 +1,24 @@
+{
+	"$schema": "https://schemas.wp.org/trunk/block.json",
+	"apiVersion": 3,
+	"name": "ldj/prompt",
+	"version": "0.1.0",
+	"title": "Journal Prompt",
+	"category": "learndash-blocks",
+	"icon": "edit",
+	"description": "A single journal prompt within a group.",
+	"textdomain": "lesson-journal",
+	"parent": [ "ldj/prompt-group" ],
+	"attributes": {
+		"promptId": {
+			"type": "number",
+			"default": 0
+		}
+	},
+	"supports": {
+		"html": false,
+		"reusable": false
+	},
+	"editorScript": "file:../../build/prompt/index.js",
+	"render": "file:./render.php"
+}

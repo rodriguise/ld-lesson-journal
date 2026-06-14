@@ -1,0 +1,8 @@
+/* Admin entries page */
+
+.ldj-entry-full {
+	padding: 1em;
+	white-space: pre-wrap;
+	line-height: 1.6;
+	font-size: 14px;
+}

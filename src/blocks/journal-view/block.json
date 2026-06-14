@@ -1,0 +1,44 @@
+{
+	"$schema": "https://schemas.wp.org/trunk/block.json",
+	"apiVersion": 3,
+	"name": "ldj/journal-view",
+	"version": "0.1.0",
+	"title": "Journal View",
+	"category": "learndash-blocks",
+	"icon": "media-text",
+	"description": "Displays the student's journal entries with print support.",
+	"textdomain": "lesson-journal",
+	"attributes": {
+		"courseId": {
+			"type": "number",
+			"default": 0
+		},
+		"lessonId": {
+			"type": "number",
+			"default": 0
+		},
+		"showTitle": {
+			"type": "boolean",
+			"default": false
+		},
+		"showStudent": {
+			"type": "boolean",
+			"default": false
+		},
+		"showPrint": {
+			"type": "boolean",
+			"default": true
+		},
+		"heading": {
+			"type": "string",
+			"default": ""
+		}
+	},
+	"supports": {
+		"align": [ "wide", "full" ],
+		"html": false
+	},
+	"editorScript": "file:../../build/journal-view/index.js",
+	"editorStyle": "file:../../build/journal-view/index.css",
+	"render": "file:./render.php"
+}

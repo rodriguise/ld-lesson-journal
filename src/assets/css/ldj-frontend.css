@@ -1,0 +1,459 @@
+/* === Prompt Group === */
+
+.ldj-group {
+	margin: 1.5em 0;
+	padding: 1.5em;
+	background: #f9fafb;
+	border: 1px solid #e5e7eb;
+	border-radius: 8px;
+}
+
+/* === Prompt Wrap === */
+
+.ldj-prompt-wrap {
+	margin-bottom: 1.5em;
+}
+
+.ldj-prompt-wrap:last-of-type {
+	margin-bottom: 1em;
+}
+
+.ldj-prompt-text {
+	margin-bottom: 0.5em;
+	font-weight: 500;
+	line-height: 1.6;
+}
+
+.ldj-prompt-text p:last-child {
+	margin-bottom: 0;
+}
+
+/* === Textarea === */
+
+.ldj-textarea-wrap {
+	position: relative;
+}
+
+.ldj-textarea {
+	display: block;
+	width: 100%;
+	padding: 0.75em;
+	border: 1px solid #d1d5db;
+	border-radius: 6px;
+	font-family: inherit;
+	font-size: 0.875em;
+	line-height: 1.5;
+	resize: vertical;
+	box-sizing: border-box;
+	transition: border-color 0.2s;
+}
+
+.ldj-textarea:focus {
+	outline: none;
+	border-color: #2563eb;
+	box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+}
+
+.ldj-char-count {
+	margin-top: 0.25em;
+	font-size: 0.8em;
+	color: #9ca3af;
+	text-align: right;
+}
+
+/* === Completed Entry Display === */
+
+.ldj-completed-entry {
+	padding: 0.75em;
+	background: #fff;
+	border: 1px solid #e5e7eb;
+	border-radius: 6px;
+	line-height: 1.6;
+}
+
+.ldj-entry-display {
+	margin-bottom: 0.5em;
+	white-space: pre-wrap;
+}
+
+.ldj-edit-entry,
+.ldj-delete-entry {
+	background: none;
+	border: none;
+	padding: 0.25em 0.5em;
+	font-size: 0.8em;
+	cursor: pointer;
+	border-radius: 4px;
+	transition: background 0.2s;
+}
+
+.ldj-edit-entry {
+	color: #2563eb;
+}
+
+.ldj-edit-entry:hover {
+	background: #eff6ff;
+}
+
+.ldj-delete-entry {
+	color: #dc2626;
+}
+
+.ldj-delete-entry:hover {
+	background: #fef2f2;
+}
+
+/* === Group Header === */
+
+.ldj-group-heading {
+	margin: 0 0 1em;
+	font-size: 1.2em;
+	font-weight: 600;
+	color: #1f2937;
+}
+
+/* === Group Actions === */
+
+.ldj-group-actions {
+	display: flex;
+	align-items: center;
+	gap: 0.75em;
+	margin-top: 1em;
+}
+
+.ldj-save-group {
+	display: inline-block;
+	padding: 0.6em 1.5em;
+	background: #2563eb;
+	color: #fff;
+	border: none;
+	border-radius: 6px;
+	font-size: 1em;
+	font-weight: 500;
+	cursor: pointer;
+	transition: background 0.2s;
+}
+
+.ldj-save-group:hover {
+	background: #1d4ed8;
+}
+
+.ldj-save-group:disabled {
+	opacity: 0.6;
+	cursor: not-allowed;
+}
+
+.ldj-cancel-edit {
+	display: inline-block;
+	padding: 0.6em 1.5em;
+	background: #f3f4f6;
+	border: 1px solid #d1d5db;
+	border-radius: 6px;
+	font-size: 1em;
+	cursor: pointer;
+	transition: background 0.2s;
+}
+
+.ldj-cancel-edit:hover {
+	background: #e5e7eb;
+}
+
+/* === Feedback === */
+
+.ldj-feedback {
+	min-height: 1.5em;
+	margin-top: 0.5em;
+	font-size: 0.9em;
+	transition: opacity 0.3s;
+}
+
+.ldj-feedback--success {
+	color: #059669;
+}
+
+.ldj-feedback--error {
+	color: #dc2626;
+}
+
+/* === Error / Login === */
+
+.ldj-error {
+	padding: 0.75em 1em;
+	background: #fef2f2;
+	border: 1px solid #fecaca;
+	border-radius: 6px;
+	color: #dc2626;
+	font-size: 0.9em;
+}
+
+.ldj-login-prompt {
+	padding: 0.75em 1em;
+	background: #fffbeb;
+	border: 1px solid #fde68a;
+	border-radius: 6px;
+	color: #92400e;
+	font-size: 0.9em;
+}
+
+/* === Completion Gate === */
+
+.ldj-completion-message {
+	margin: 0.5em 0;
+	padding: 0.5em 0.75em;
+	background: #fffbeb;
+	border: 1px solid #fde68a;
+	border-radius: 6px;
+	color: #92400e;
+	font-size: 0.875em;
+}
+
+.ldj-disabled {
+	opacity: 0.5;
+	cursor: not-allowed !important;
+}
+
+/* === Journal View === */
+
+.ldj-journal-wrap {
+	max-width: 800px;
+	margin: 2em auto;
+}
+
+.ldj-journal-print-header {
+	display: none;
+}
+
+.ldj-journal-heading {
+	margin: 0 0 1em;
+	font-size: 1.2em;
+	font-weight: 600;
+	color: #1f2937;
+}
+
+.ldj-journal-header {
+	margin-bottom: 2em;
+}
+
+.ldj-journal-title {
+	margin: 0 0 0.25em;
+	font-size: 1.5em;
+}
+
+.ldj-journal-student {
+	margin: 0;
+	color: #6b7280;
+}
+
+.ldj-journal-section {
+	margin-bottom: 2em;
+}
+
+.ldj-journal-lesson-title {
+	margin: 0 0 1em;
+	padding-bottom: 0.5em;
+	border-bottom: 1px solid #e5e7eb;
+	color: #374151;
+}
+
+.ldj-journal-entry {
+	margin-bottom: 1.5em;
+	padding: 1em;
+	background: #f9fafb;
+	border-radius: 6px;
+}
+
+.ldj-journal-question {
+	margin-bottom: 0.5em;
+	font-weight: 500;
+}
+
+.ldj-journal-question p:last-child {
+	margin-bottom: 0;
+}
+
+.ldj-journal-answer {
+	padding: 0.75em;
+	background: #fff;
+	border: 1px solid #e5e7eb;
+	border-radius: 4px;
+	line-height: 1.6;
+	white-space: pre-wrap;
+}
+
+.ldj-journal-meta {
+	margin-top: 0.5em;
+	font-size: 0.8em;
+	color: #9ca3af;
+}
+
+.ldj-journal-edited {
+	font-style: italic;
+}
+
+/* === Journal Toolbar === */
+
+.ldj-journal-toolbar {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	margin-top: 1.5em;
+	padding-top: 1em;
+	border-top: 1px solid #e5e7eb;
+}
+
+.ldj-journal-pagination {
+	display: flex;
+	align-items: center;
+	gap: 0.75em;
+}
+
+.ldj-journal-prev,
+.ldj-journal-next {
+	display: inline-block;
+	padding: 0.4em 1em;
+	background: #f3f4f6;
+	border: 1px solid #d1d5db;
+	border-radius: 6px;
+	font-size: 0.8em;
+	cursor: pointer;
+	transition: background 0.2s;
+}
+
+.ldj-journal-prev:hover:not(:disabled),
+.ldj-journal-next:hover:not(:disabled) {
+	background: #e5e7eb;
+}
+
+.ldj-journal-prev:disabled,
+.ldj-journal-next:disabled {
+	opacity: 0.4;
+	cursor: not-allowed;
+}
+
+.ldj-journal-page-info {
+	font-size: 0.8em;
+	color: #6b7280;
+	min-width: 3em;
+	text-align: center;
+}
+
+.ldj-journal-actions {
+	display: flex;
+	align-items: center;
+	gap: 0.25em;
+}
+
+.ldj-journal-save-btn,
+.ldj-print-btn {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	width: 32px;
+	height: 32px;
+	padding: 0;
+	background: none;
+	border: 1px solid transparent;
+	border-radius: 4px;
+	color: #6b7280;
+	cursor: pointer;
+	transition: background 0.2s, color 0.2s, border-color 0.2s;
+	position: relative;
+}
+
+.ldj-journal-save-btn:hover,
+.ldj-print-btn:hover {
+	background: #f3f4f6;
+	border-color: #d1d5db;
+	color: #374151;
+}
+
+.ldj-journal-save-btn .dashicons,
+.ldj-print-btn .dashicons {
+	font-size: 18px;
+	width: 18px;
+	height: 18px;
+}
+
+/* === PDF Spinner === */
+
+@keyframes ldj-spin {
+	from { transform: rotate(0deg); }
+	to   { transform: rotate(360deg); }
+}
+
+.ldj-spin {
+	animation: ldj-spin 1s linear infinite;
+}
+
+/* === Print Styles === */
+
+@media print {
+	body.ldj-printing > *:not(.ldj-journal-wrap) {
+		display: none !important;
+	}
+
+	body.ldj-printing > .ldj-journal-wrap {
+		width: 100%;
+		max-width: none;
+		margin: 0;
+		padding: 1.5cm;
+		box-sizing: border-box;
+	}
+
+	.ldj-journal-print-header {
+		display: flex !important;
+		align-items: center;
+		gap: 1.5em;
+		margin-bottom: 1.5em;
+		padding-bottom: 1em;
+		border-bottom: 2px solid #333;
+	}
+
+	.ldj-journal-logo {
+		max-height: 60px;
+		max-width: 200px;
+		object-fit: contain;
+	}
+
+	.ldj-journal-print-title {
+		margin: 0 0 0.15em;
+		font-size: 1.4em;
+	}
+
+	.ldj-journal-print-student {
+		margin: 0;
+		color: #555;
+	}
+
+	.ldj-journal-header,
+	.ldj-journal-toolbar,
+	.ldj-save-group,
+	.ldj-edit-entry,
+	.ldj-delete-entry,
+	.ldj-group-actions,
+	.ldj-feedback {
+		display: none !important;
+	}
+
+	.ldj-journal-section {
+		display: block !important;
+		break-inside: avoid;
+	}
+
+	.ldj-journal-entry {
+		display: block !important;
+		break-inside: avoid;
+		border: 1px solid #ccc;
+		background: #fff;
+	}
+
+	.ldj-journal-answer {
+		border-color: #ccc;
+	}
+
+	.ldj-group {
+		border: none;
+		padding: 0;
+		background: none;
+	}
+}

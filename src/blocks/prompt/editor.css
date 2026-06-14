@@ -1,0 +1,57 @@
+.ldj-prompt--editor {
+	padding: 1em;
+	margin-bottom: 1em;
+	background: #fff;
+	border: 1px solid #e5e7eb;
+	border-radius: 6px;
+}
+
+.ldj-prompt-picker {
+	padding: 0.5em;
+}
+
+.ldj-prompt-picker h4 {
+	margin: 0 0 1em;
+}
+
+.ldj-prompt-divider {
+	position: relative;
+	margin: 1.5em 0;
+	text-align: center;
+	border-top: 1px solid #e5e7eb;
+}
+
+.ldj-prompt-divider span {
+	position: relative;
+	top: -0.75em;
+	padding: 0 0.75em;
+	background: #fff;
+	color: #9ca3af;
+	font-size: 0.85em;
+}
+
+.ldj-textarea-preview textarea {
+	opacity: 0.5;
+}
+
+/* Create / edit actions */
+
+.ldj-create-actions {
+	margin-top: 1.5em;
+}
+
+.ldj-cancel-action {
+	margin-top: 0.5em;
+}
+
+.ldj-prompt-actions {
+	display: flex;
+	gap: 0.5em;
+	margin-top: 0.75em;
+	padding-top: 0.75em;
+	border-top: 1px solid #e5e7eb;
+}
+
+.ldj-prompt-picker .components-notice {
+	margin: 0 0 1em;
+}

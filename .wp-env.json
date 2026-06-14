@@ -1,0 +1,21 @@
+{
+    "core": null,
+    "phpVersion": "8.3",
+    "testsEnvironment": false,
+    "plugins": [
+        "./wp-content/plugins/sfwd-lms"
+    ],
+    "mappings": {
+        "wp-content/plugins/lesson-journal": "./src"
+    },
+    "themes": [
+        "https://downloads.wordpress.org/theme/twentytwentyfour.zip"
+    ],
+    "config": {
+        "WP_DEBUG": true,
+        "WP_DEBUG_LOG": true,
+        "WP_DEBUG_DISPLAY": false,
+        "SCRIPT_DEBUG": true,
+        "WP_ENVIRONMENT_TYPE": "local"
+    }
+}

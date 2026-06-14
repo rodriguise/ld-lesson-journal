@@ -1,0 +1,32 @@
+.ldj-journal-view--editor {
+	padding: 2em;
+	text-align: center;
+	background: #f0f7ff;
+	border: 1px dashed #93c5fd;
+	border-radius: 8px;
+}
+
+.ldj-journal-view-placeholder .dashicons {
+	font-size: 32px;
+	width: 32px;
+	height: 32px;
+	color: #2563eb;
+	margin-bottom: 0.5em;
+}
+
+.ldj-journal-view-placeholder h4 {
+	margin: 0 0 0.5em;
+	color: #1e40af;
+}
+
+.ldj-journal-view-placeholder p {
+	margin: 0 0 0.5em;
+	color: #4b5563;
+	font-size: 13px;
+}
+
+.ldj-journal-view-note {
+	font-style: italic;
+	color: #6b7280 !important;
+	font-size: 12px !important;
+}

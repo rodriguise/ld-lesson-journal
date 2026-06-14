@@ -1,1 +1,3 @@
-wp-data/
+wp-content/
+node_modules/
+src/build/
