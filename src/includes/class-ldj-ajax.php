@@ -41,10 +41,15 @@ class LDJ_Ajax {
 				continue;
 			}
 
+			$required  = (bool) get_post_meta( $entry['prompt_id'], '_ldj_required', true );
 			$min_chars = (int) get_post_meta( $entry['prompt_id'], '_ldj_min_chars', true );
 			$max_chars = (int) get_post_meta( $entry['prompt_id'], '_ldj_max_chars', true );
 
-			if ( $min_chars > 0 && mb_strlen( $entry['entry_text'] ) > 0 && mb_strlen( $entry['entry_text'] ) < $min_chars ) {
+			if ( $required && $min_chars < 1 ) {
+				$min_chars = 1;
+			}
+
+			if ( $min_chars > 0 && mb_strlen( $entry['entry_text'] ) < $min_chars ) {
 				$errors[] = sprintf(
 					__( '"%1$s" must be at least %2$d characters.', 'lesson-journal' ),
 					get_the_title( $entry['prompt_id'] ),

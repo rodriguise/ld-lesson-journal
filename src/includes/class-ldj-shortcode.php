@@ -44,7 +44,9 @@ class LDJ_Shortcode {
 				'deleted'  => __( 'Entry deleted.', 'lesson-journal' ),
 				'error'    => __( 'An error occurred. Please try again.', 'lesson-journal' ),
 				'confirm'  => __( 'Are you sure you want to delete this entry?', 'lesson-journal' ),
-				'required' => __( 'Please complete all required entries.', 'lesson-journal' ),
+				'required'       => __( 'Please complete all required entries.', 'lesson-journal' ),
+				'promptRequired' => __( 'This prompt requires a response.', 'lesson-journal' ),
+				'promptMinChars' => __( 'This prompt requires at least %d characters.', 'lesson-journal' ),
 			),
 		) );
 	}

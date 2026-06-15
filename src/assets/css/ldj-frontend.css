@@ -511,6 +511,67 @@
 	animation: ldj-spin 1s linear infinite;
 }
 
+/* === Completion Tooltip === */
+
+.ldj-mark-complete-wrap {
+	position: relative;
+	display: inline-block;
+}
+
+.ldj-completion-tooltip {
+	display: none;
+	position: absolute;
+	bottom: calc(100% + 10px);
+	left: 50%;
+	transform: translateX(-50%);
+	min-width: 260px;
+	max-width: 340px;
+	padding: 12px 16px;
+	background: #1e293b;
+	color: #f1f5f9;
+	border-radius: 8px;
+	font-size: 0.85em;
+	line-height: 1.5;
+	box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+	z-index: 100;
+	pointer-events: none;
+}
+
+.ldj-completion-tooltip::after {
+	content: '';
+	position: absolute;
+	top: 100%;
+	left: 50%;
+	transform: translateX(-50%);
+	border: 6px solid transparent;
+	border-top-color: #1e293b;
+}
+
+.ldj-mark-complete-wrap:hover .ldj-completion-tooltip {
+	display: block;
+}
+
+.ldj-completion-tooltip__heading {
+	margin: 0 0 6px;
+	font-weight: 600;
+	color: #fbbf24;
+	font-size: 0.95em;
+}
+
+.ldj-completion-tooltip__list {
+	margin: 0;
+	padding-left: 1.2em;
+	color: #e2e8f0;
+}
+
+.ldj-completion-tooltip__list li {
+	margin-bottom: 3px;
+}
+
+.ldj-completion-tooltip__list li:last-child {
+	margin-bottom: 0;
+}
+
 /* === Print Styles === */
 
 @media print {

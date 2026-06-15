@@ -22,11 +22,11 @@ class LDJ_Completion {
 		$prompt_ids = self::get_required_prompt_ids( $post->ID );
 
 		if ( empty( $prompt_ids ) || ! $user_id ) {
-			return $mark_complete_html;
+			return self::maybe_wrap_with_tooltip( $mark_complete_html, $post, array() );
 		}
 
 		if ( LDJ_Entry::has_completed_prompts( $prompt_ids, $user_id, $post->ID ) ) {
-			return $mark_complete_html;
+			return self::maybe_wrap_with_tooltip( $mark_complete_html, $post, array() );
 		}
 
 		$mark_complete_html = preg_replace(
@@ -35,7 +35,86 @@ class LDJ_Completion {
 			$mark_complete_html
 		);
 
-		return $mark_complete_html;
+		$incomplete = self::get_incomplete_prompts( $prompt_ids, $user_id, $post->ID );
+
+		return self::wrap_with_tooltip( $mark_complete_html, $post, $incomplete );
+	}
+
+	private static function maybe_wrap_with_tooltip( string $html, $post, array $incomplete ): string {
+		$items = self::build_tooltip_items( $post->ID, $incomplete );
+
+		if ( empty( $items ) ) {
+			return $html;
+		}
+
+		return self::render_tooltip_wrap( $html, $items );
+	}
+
+	private static function wrap_with_tooltip( string $html, $post, array $incomplete ): string {
+		$items = self::build_tooltip_items( $post->ID, $incomplete );
+
+		return self::render_tooltip_wrap( $html, $items );
+	}
+
+	private static function build_tooltip_items( int $post_id, array $incomplete ): array {
+		$items = array();
+
+		foreach ( $incomplete as $prompt_id ) {
+			$title = get_the_title( $prompt_id );
+			if ( ! $title ) {
+				$title = sprintf( __( 'Prompt #%d', 'lesson-journal' ), $prompt_id );
+			}
+			$items[] = '<li>' . sprintf(
+				esc_html__( 'Complete journal entry: %s', 'lesson-journal' ),
+				'<strong>' . esc_html( $title ) . '</strong>'
+			) . '</li>';
+		}
+
+		if ( self::has_video_progression( $post_id ) ) {
+			$items[] = '<li>' . esc_html__( 'Watch the video to completion', 'lesson-journal' ) . '</li>';
+		}
+
+		return $items;
+	}
+
+	private static function render_tooltip_wrap( string $button_html, array $items ): string {
+		$tooltip  = '<div class="ldj-completion-tooltip" data-ldj-notice>';
+		$tooltip .= '<p class="ldj-completion-tooltip__heading">' . esc_html__( 'To mark this lesson complete:', 'lesson-journal' ) . '</p>';
+		$tooltip .= '<ul class="ldj-completion-tooltip__list">' . implode( '', $items ) . '</ul>';
+		$tooltip .= '</div>';
+
+		return '<div class="ldj-mark-complete-wrap">' . $button_html . $tooltip . '</div>';
+	}
+
+	private static function get_incomplete_prompts( array $prompt_ids, int $user_id, int $lesson_id ): array {
+		$entries    = LDJ_Entry::get_many( $prompt_ids, $user_id, $lesson_id );
+		$completed  = array();
+
+		foreach ( $entries as $entry ) {
+			if ( ! empty( trim( $entry->entry_text ) ) ) {
+				$min_chars = (int) get_post_meta( $entry->prompt_id, '_ldj_min_chars', true );
+				$required  = (bool) get_post_meta( $entry->prompt_id, '_ldj_required', true );
+				if ( $required && $min_chars < 1 ) {
+					$min_chars = 1;
+				}
+				if ( $min_chars > 0 && mb_strlen( $entry->entry_text ) < $min_chars ) {
+					continue;
+				}
+				$completed[] = (int) $entry->prompt_id;
+			}
+		}
+
+		return array_values( array_diff( $prompt_ids, $completed ) );
+	}
+
+	private static function has_video_progression( int $post_id ): bool {
+		if ( ! function_exists( 'learndash_get_setting' ) ) {
+			return false;
+		}
+
+		$video_enabled = learndash_get_setting( $post_id, 'lesson_video_enabled' );
+
+		return ( 'on' === $video_enabled );
 	}
 
 	public static function gate_process_complete( $process, $post ) {

@@ -176,14 +176,26 @@
 		var prompts  = group.querySelectorAll( '.ldj-prompt-wrap' );
 		var feedback = group.querySelector( '.ldj-feedback' );
 		var entries  = [];
+		var errors   = [];
 
 		prompts.forEach( function ( wrap ) {
-			var textarea = wrap.querySelector( '.ldj-textarea' );
+			var textarea     = wrap.querySelector( '.ldj-textarea' );
+			var textareaWrap = wrap.querySelector( '.ldj-textarea-wrap' );
 			if ( ! textarea ) return;
+
+			var text     = textarea.value;
+			var minChars = textareaWrap ? parseInt( textareaWrap.dataset.minChars, 10 ) || 0 : 0;
+
+			if ( minChars > 0 && text.length < minChars ) {
+				errors.push( minChars === 1
+					? ldjData.i18n.promptRequired
+					: ldjData.i18n.promptMinChars.replace( '%d', minChars )
+				);
+			}
 
 			entries.push( {
 				prompt_id:  wrap.dataset.promptId,
-				entry_text: textarea.value,
+				entry_text: text,
 			} );
 		} );
 
@@ -196,6 +208,11 @@
 				showFeedback( feedback, ldjData.i18n.required, 'error' );
 				return;
 			}
+		}
+
+		if ( errors.length > 0 ) {
+			showFeedback( feedback, errors[0], 'error' );
+			return;
 		}
 
 		btn.disabled    = true;
@@ -327,6 +344,8 @@
 		exitEditMode( group );
 	}
 
+	var savedTooltipHtml = '';
+
 	function updateMarkComplete( required, allCompleted ) {
 		if ( ! required ) return;
 
@@ -336,14 +355,31 @@
 		var btn = form.querySelector( 'input[type="submit"], button[type="submit"]' );
 		if ( ! btn ) return;
 
+		var wrap = form.closest( '.ldj-mark-complete-wrap' );
+
 		if ( allCompleted ) {
 			btn.disabled = false;
 			btn.classList.remove( 'ldj-disabled' );
-			var msg = form.parentElement?.querySelector( '.ldj-completion-message' );
-			if ( msg ) msg.remove();
+			if ( wrap ) {
+				var tooltip = wrap.querySelector( '[data-ldj-notice]' );
+				if ( tooltip ) {
+					if ( ! savedTooltipHtml ) {
+						savedTooltipHtml = tooltip.outerHTML;
+					}
+					tooltip.style.display = 'none';
+				}
+			}
 		} else {
 			btn.disabled = true;
 			btn.classList.add( 'ldj-disabled' );
+			if ( wrap ) {
+				var existing = wrap.querySelector( '[data-ldj-notice]' );
+				if ( existing ) {
+					existing.style.display = '';
+				} else if ( savedTooltipHtml ) {
+					wrap.insertAdjacentHTML( 'beforeend', savedTooltipHtml );
+				}
+			}
 		}
 	}
 
