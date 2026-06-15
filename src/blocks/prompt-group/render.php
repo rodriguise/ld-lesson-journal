@@ -67,6 +67,18 @@ wp_localize_script( 'ldj-frontend', 'ldjData', array(
 	<?php endif; ?>
 	<div class="ldj-group-actions">
 		<button type="button" class="ldj-save-group"><?php esc_html_e( 'Submit', 'lesson-journal' ); ?></button>
+		<?php
+		$course_id = 0;
+		if ( function_exists( 'learndash_get_course_id' ) ) {
+			$course_id = (int) learndash_get_course_id( $lesson_id );
+		}
+		if ( ! $course_id ) {
+			$course_id = (int) get_post_meta( $lesson_id, 'course_id', true );
+		}
+		if ( $course_id > 0 ) :
+		?>
+		<a href="<?php echo esc_url( LDJ_Journal_Page::get_url( $course_id ) ); ?>" class="ldj-view-journal" target="_blank" rel="noopener"><?php esc_html_e( 'View Journal', 'lesson-journal' ); ?></a>
+		<?php endif; ?>
 	</div>
 	<div class="ldj-feedback" aria-live="polite"></div>
 </div>

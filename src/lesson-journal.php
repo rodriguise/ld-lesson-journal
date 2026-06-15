@@ -30,6 +30,7 @@ require_once LESSON_JOURNAL_PATH . 'includes/class-ldj-shortcode.php';
 require_once LESSON_JOURNAL_PATH . 'includes/class-ldj-journal-shortcode.php';
 require_once LESSON_JOURNAL_PATH . 'includes/class-ldj-completion.php';
 require_once LESSON_JOURNAL_PATH . 'includes/class-ldj-admin-entries.php';
+require_once LESSON_JOURNAL_PATH . 'includes/class-ldj-journal-page.php';
 
 function lesson_journal_learndash_active() {
 	return defined( 'LEARNDASH_VERSION' );
@@ -51,6 +52,7 @@ function lesson_journal_init() {
 	LDJ_Journal_Shortcode::register();
 	LDJ_Ajax::register();
 	LDJ_Completion::register();
+	LDJ_Journal_Page::register();
 
 	if ( is_admin() ) {
 		LDJ_Admin_Entries::register();

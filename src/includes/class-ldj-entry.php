@@ -168,12 +168,25 @@ class LDJ_Entry {
 	public static function get_by_user_and_lesson( int $user_id, int $lesson_id ): array {
 		global $wpdb;
 
+		$step_ids = array( $lesson_id );
+
+		if ( function_exists( 'learndash_get_topic_list' ) ) {
+			$course_id = (int) get_post_meta( $lesson_id, 'course_id', true );
+			$topics    = learndash_get_topic_list( $lesson_id, $course_id );
+			if ( ! empty( $topics ) ) {
+				foreach ( $topics as $topic ) {
+					$step_ids[] = $topic->ID;
+				}
+			}
+		}
+
+		$placeholders = implode( ',', array_fill( 0, count( $step_ids ), '%d' ) );
+		$args         = array_merge( array( LDJ_DB::table_name(), $user_id ), $step_ids );
+
 		return $wpdb->get_results(
 			$wpdb->prepare(
-				'SELECT * FROM %i WHERE user_id = %d AND lesson_id = %d ORDER BY prompt_id ASC',
-				LDJ_DB::table_name(),
-				$user_id,
-				$lesson_id
+				"SELECT * FROM %i WHERE user_id = %d AND lesson_id IN ({$placeholders}) ORDER BY lesson_id ASC, prompt_id ASC",
+				$args
 			)
 		);
 	}

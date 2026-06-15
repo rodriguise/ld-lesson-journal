@@ -2,14 +2,14 @@ import './editor.css';
 import { registerBlockType } from '@wordpress/blocks';
 import { useBlockProps, InspectorControls, RichText } from '@wordpress/block-editor';
 import { useState, useEffect } from '@wordpress/element';
-import { PanelBody, ComboboxControl, ToggleControl } from '@wordpress/components';
+import { PanelBody, ComboboxControl, ToggleControl, SelectControl } from '@wordpress/components';
 import apiFetch from '@wordpress/api-fetch';
 import { __ } from '@wordpress/i18n';
 
 registerBlockType( 'ldj/journal-view', {
 	edit( { attributes, setAttributes } ) {
 		const blockProps = useBlockProps( { className: 'ldj-journal-view--editor' } );
-		const { courseId, lessonId, showTitle, showStudent, showPrint, showSave, showRefresh, heading, instructions } = attributes;
+		const { courseId, lessonId, showTitle, showStudent, showPrint, showSave, showRefresh, heading, instructions, showContent, buttonStyle, showFilter } = attributes;
 
 		const [ courses, setCourses ] = useState( [] );
 		const [ lessons, setLessons ] = useState( [] );
@@ -113,6 +113,28 @@ registerBlockType( 'ldj/journal-view', {
 							label={ __( 'Show refresh button', 'lesson-journal' ) }
 							checked={ showRefresh }
 							onChange={ ( val ) => setAttributes( { showRefresh: val } ) }
+						/>
+						<ToggleControl
+							label={ __( 'Show content inline', 'lesson-journal' ) }
+							help={ __( 'When off, only the toolbar buttons are shown.', 'lesson-journal' ) }
+							checked={ showContent }
+							onChange={ ( val ) => setAttributes( { showContent: val } ) }
+						/>
+						<ToggleControl
+							label={ __( 'Show lesson filter', 'lesson-journal' ) }
+							help={ __( 'Let students filter entries by lesson.', 'lesson-journal' ) }
+							checked={ showFilter }
+							onChange={ ( val ) => setAttributes( { showFilter: val } ) }
+						/>
+						<SelectControl
+							label={ __( 'Button style', 'lesson-journal' ) }
+							value={ buttonStyle }
+							options={ [
+								{ label: __( 'Icons', 'lesson-journal' ), value: 'icons' },
+								{ label: __( 'Text', 'lesson-journal' ), value: 'text' },
+							] }
+							onChange={ ( val ) => setAttributes( { buttonStyle: val } ) }
+							__nextHasNoMarginBottom
 						/>
 					</PanelBody>
 				</InspectorControls>

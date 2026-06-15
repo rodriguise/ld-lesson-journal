@@ -44,6 +44,18 @@
 		"instructions": {
 			"type": "string",
 			"default": ""
+		},
+		"showContent": {
+			"type": "boolean",
+			"default": true
+		},
+		"buttonStyle": {
+			"type": "string",
+			"default": "icons"
+		},
+		"showFilter": {
+			"type": "boolean",
+			"default": false
 		}
 	},
 	"supports": {

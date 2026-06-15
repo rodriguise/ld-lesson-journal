@@ -385,6 +385,10 @@
 		formData.append( 'show_save', wrap.dataset.showSave || '1' );
 		formData.append( 'show_refresh', wrap.dataset.showRefresh || '1' );
 		formData.append( 'heading', wrap.dataset.heading || '' );
+		formData.append( 'instructions', wrap.dataset.instructions || '' );
+		formData.append( 'show_content', wrap.dataset.showContent || '1' );
+		formData.append( 'button_style', wrap.dataset.buttonStyle || 'icons' );
+		formData.append( 'show_filter', wrap.dataset.showFilter || '0' );
 
 		var refreshBtn = wrap.querySelector( '.ldj-journal-refresh-btn' );
 		if ( refreshBtn ) {
@@ -429,35 +433,60 @@
 	function initSingleJournalView( wrap ) {
 		initJournalPagination( wrap );
 		initJournalButtons( wrap );
+		initJournalFilter( wrap );
+	}
+
+	function initJournalFilter( wrap ) {
+		var filter = wrap.querySelector( '.ldj-lesson-filter' );
+		if ( ! filter ) return;
+
+		filter.addEventListener( 'change', function () {
+			wrap.dataset.lessonId = filter.value;
+			refreshSingleJournal( wrap );
+		} );
 	}
 
 	function initJournalPagination( wrap ) {
-		var entries  = wrap.querySelectorAll( '.ldj-journal-entry' );
+		if ( wrap.dataset.showContent === '0' ) return;
+
 		var sections = wrap.querySelectorAll( '.ldj-journal-section' );
 		var prevBtn  = wrap.querySelector( '.ldj-journal-prev' );
 		var nextBtn  = wrap.querySelector( '.ldj-journal-next' );
 		var pageInfo = wrap.querySelector( '.ldj-journal-page-info' );
+		var paginationWrap = wrap.querySelector( '.ldj-journal-pagination' );
 
-		if ( ! entries.length || ! prevBtn || ! nextBtn ) return;
+		if ( ! sections.length || ! prevBtn || ! nextBtn ) return;
 
-		var total   = entries.length;
+		var lessonId = wrap.dataset.lessonId || '0';
+
+		if ( lessonId !== '0' || sections.length <= 1 ) {
+			sections.forEach( function ( s ) {
+				s.style.display = '';
+				s.querySelectorAll( '.ldj-journal-entry' ).forEach( function ( e ) {
+					e.style.display = '';
+				} );
+			} );
+			if ( paginationWrap ) paginationWrap.style.display = 'none';
+			return;
+		}
+
+		if ( paginationWrap ) paginationWrap.style.display = '';
+
+		var total   = sections.length;
 		var current = 0;
 
-		function showEntry( index ) {
+		function showSection( index ) {
 			current = index;
 
-			entries.forEach( function ( entry ) {
-				entry.style.display = 'none';
-			} );
 			sections.forEach( function ( section ) {
 				section.style.display = 'none';
 			} );
 
-			var active  = entries[ current ];
-			var section = active.closest( '.ldj-journal-section' );
-
-			active.style.display  = '';
-			section.style.display = '';
+			var active = sections[ current ];
+			active.style.display = '';
+			active.querySelectorAll( '.ldj-journal-entry' ).forEach( function ( e ) {
+				e.style.display = '';
+			} );
 
 			prevBtn.disabled = current === 0;
 			nextBtn.disabled = current === total - 1;
@@ -465,14 +494,14 @@
 		}
 
 		prevBtn.addEventListener( 'click', function () {
-			if ( current > 0 ) showEntry( current - 1 );
+			if ( current > 0 ) showSection( current - 1 );
 		} );
 
 		nextBtn.addEventListener( 'click', function () {
-			if ( current < total - 1 ) showEntry( current + 1 );
+			if ( current < total - 1 ) showSection( current + 1 );
 		} );
 
-		showEntry( 0 );
+		showSection( 0 );
 	}
 
 	function initJournalButtons( wrap ) {

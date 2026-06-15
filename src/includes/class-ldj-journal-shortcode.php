@@ -24,6 +24,9 @@ class LDJ_Journal_Shortcode {
 			'show_refresh' => sanitize_text_field( $_POST['show_refresh'] ?? '1' ),
 			'heading'      => wp_kses_post( $_POST['heading'] ?? '' ),
 			'instructions' => wp_kses_post( $_POST['instructions'] ?? '' ),
+			'show_content' => sanitize_text_field( $_POST['show_content'] ?? '1' ),
+			'button_style' => sanitize_text_field( $_POST['button_style'] ?? 'icons' ),
+			'show_filter'  => sanitize_text_field( $_POST['show_filter'] ?? '0' ),
 		);
 
 		$html = self::render_inner( $atts );
@@ -42,6 +45,9 @@ class LDJ_Journal_Shortcode {
 			'show_refresh' => '1',
 			'heading'      => '',
 			'instructions' => '',
+			'show_content' => '1',
+			'button_style' => 'icons',
+			'show_filter'  => '0',
 		), $atts, 'ldj_journal' );
 
 		$user_id = get_current_user_id();
@@ -74,6 +80,11 @@ class LDJ_Journal_Shortcode {
 			true
 		);
 
+		wp_localize_script( 'ldj-frontend', 'ldjData', array(
+			'ajaxUrl' => admin_url( 'admin-ajax.php' ),
+			'nonce'   => wp_create_nonce( 'ldj_entry_nonce' ),
+		) );
+
 		wp_enqueue_style( 'dashicons' );
 
 		wp_enqueue_script(
@@ -98,6 +109,9 @@ class LDJ_Journal_Shortcode {
 		$show_refresh = filter_var( $atts['show_refresh'] ?? '1', FILTER_VALIDATE_BOOLEAN );
 		$heading      = wp_kses_post( $atts['heading'] );
 		$instructions = wp_kses_post( $atts['instructions'] ?? '' );
+		$show_content = filter_var( $atts['show_content'] ?? '1', FILTER_VALIDATE_BOOLEAN );
+		$button_style = ( $atts['button_style'] ?? 'icons' ) === 'text' ? 'text' : 'icons';
+		$show_filter  = filter_var( $atts['show_filter'] ?? '0', FILTER_VALIDATE_BOOLEAN );
 
 		if ( ! $user_id || ! $course_id ) {
 			return '';
@@ -149,14 +163,23 @@ class LDJ_Journal_Shortcode {
 			. ' data-show-refresh="' . esc_attr( $show_refresh ? '1' : '0' ) . '"'
 			. ' data-heading="' . esc_attr( $heading ) . '"'
 			. ' data-instructions="' . esc_attr( $instructions ) . '"'
+			. ' data-show-content="' . esc_attr( $show_content ? '1' : '0' ) . '"'
+			. ' data-button-style="' . esc_attr( $button_style ) . '"'
+			. ' data-show-filter="' . esc_attr( $show_filter ? '1' : '0' ) . '"'
 			. '>';
+
+		$site_name   = get_bloginfo( 'name' );
+		$print_title = $site_name . ' | ' . $course_title;
+		if ( $lesson_id > 0 ) {
+			$print_title .= ' | ' . get_the_title( $lesson_id );
+		}
 
 		$output .= '<div class="ldj-journal-print-header">';
 		if ( $logo_url ) {
-			$output .= '<img class="ldj-journal-logo" src="' . esc_url( $logo_url ) . '" alt="' . esc_attr( get_bloginfo( 'name' ) ) . '">';
+			$output .= '<img class="ldj-journal-logo" src="' . esc_url( $logo_url ) . '" alt="' . esc_attr( $site_name ) . '">';
 		}
 		$output .= '<div class="ldj-journal-print-info">';
-		$output .= '<h2 class="ldj-journal-print-title">' . esc_html( $title ) . '</h2>';
+		$output .= '<h2 class="ldj-journal-print-title">' . esc_html( $print_title ) . '</h2>';
 		$output .= '<p class="ldj-journal-print-student">' . esc_html( $user->display_name ) . '</p>';
 		$output .= '</div>';
 		$output .= '</div>';
@@ -173,8 +196,35 @@ class LDJ_Journal_Shortcode {
 			$output .= '<hr class="ldj-group-divider">';
 		}
 
+		$content_style = $show_content ? '' : ' style="display:none"';
+
+		if ( $show_filter ) {
+			$lessons = array();
+			if ( function_exists( 'learndash_get_lesson_list' ) ) {
+				$lesson_posts = learndash_get_lesson_list( $course_id );
+				foreach ( $lesson_posts as $lp ) {
+					if ( is_object( $lp ) ) {
+						$lessons[] = $lp;
+					}
+				}
+			}
+
+			if ( ! empty( $lessons ) ) {
+				$output .= '<div class="ldj-journal-filter">';
+				$output .= '<label for="ldj-lesson-filter">' . esc_html__( 'Filter by lesson:', 'lesson-journal' ) . '</label>';
+				$output .= '<select id="ldj-lesson-filter" class="ldj-lesson-filter">';
+				$output .= '<option value="0">' . esc_html__( 'All Lessons', 'lesson-journal' ) . '</option>';
+				foreach ( $lessons as $lp ) {
+					$selected = ( $lesson_id === $lp->ID ) ? ' selected' : '';
+					$output .= '<option value="' . esc_attr( $lp->ID ) . '"' . $selected . '>' . esc_html( $lp->post_title ) . '</option>';
+				}
+				$output .= '</select>';
+				$output .= '</div>';
+			}
+		}
+
 		if ( $show_title || $show_student ) {
-			$output .= '<div class="ldj-journal-header">';
+			$output .= '<div class="ldj-journal-header"' . $content_style . '>';
 			if ( $show_title ) {
 				$output .= '<h2 class="ldj-journal-title">' . esc_html( $title ) . '</h2>';
 			}
@@ -187,10 +237,19 @@ class LDJ_Journal_Shortcode {
 		$entry_index = 0;
 
 		foreach ( $grouped as $group_lesson_id => $lesson_entries ) {
-			$lesson_title = get_the_title( $group_lesson_id );
+			$section_title = get_the_title( $group_lesson_id );
+			if ( get_post_type( $group_lesson_id ) === 'sfwd-topic' ) {
+				$parent_lesson_id = 0;
+				if ( function_exists( 'learndash_get_setting' ) ) {
+					$parent_lesson_id = (int) learndash_get_setting( $group_lesson_id, 'lesson' );
+				}
+				if ( $parent_lesson_id > 0 ) {
+					$section_title = get_the_title( $parent_lesson_id ) . ' | ' . $section_title;
+				}
+			}
 
-			$output .= '<div class="ldj-journal-section">';
-			$output .= '<h3 class="ldj-journal-lesson-title">' . esc_html( $lesson_title ) . '</h3>';
+			$output .= '<div class="ldj-journal-section"' . $content_style . '>';
+			$output .= '<h3 class="ldj-journal-lesson-title">' . esc_html( $section_title ) . '</h3>';
 
 			foreach ( $lesson_entries as $entry ) {
 				$prompt = get_post( $entry->prompt_id );
@@ -211,7 +270,7 @@ class LDJ_Journal_Shortcode {
 						. esc_html__( '(edited)', 'lesson-journal' )
 						. '</span>';
 				}
-				$output .= ' <span class="ldj-journal-topic">| ' . esc_html( $lesson_title ) . '</span>';
+				$output .= ' <span class="ldj-journal-topic">| <a href="' . esc_url( get_permalink( $group_lesson_id ) ) . '" target="_blank" rel="noopener">' . esc_html( $lesson_title ) . '</a></span>';
 				$output .= '</div>';
 				$output .= '</div>';
 
@@ -221,8 +280,10 @@ class LDJ_Journal_Shortcode {
 			$output .= '</div>';
 		}
 
+		$is_text = $button_style === 'text';
+
 		$output .= '<div class="ldj-journal-toolbar">';
-		$output .= '<div class="ldj-journal-pagination">';
+		$output .= '<div class="ldj-journal-pagination"' . $content_style . '>';
 		$output .= '<button type="button" class="ldj-journal-prev" disabled>&larr; ' . esc_html__( 'Previous', 'lesson-journal' ) . '</button>';
 		$output .= '<span class="ldj-journal-page-info"></span>';
 		$output .= '<button type="button" class="ldj-journal-next">' . esc_html__( 'Next', 'lesson-journal' ) . ' &rarr;</button>';
@@ -230,17 +291,29 @@ class LDJ_Journal_Shortcode {
 		$output .= '<div class="ldj-journal-actions">';
 		if ( $show_refresh ) {
 			$output .= '<button type="button" class="ldj-journal-refresh-btn" title="' . esc_attr__( 'Refresh', 'lesson-journal' ) . '">';
-			$output .= '<span class="dashicons dashicons-update"></span>';
+			if ( $is_text ) {
+				$output .= esc_html__( 'Refresh', 'lesson-journal' );
+			} else {
+				$output .= '<span class="dashicons dashicons-update"></span>';
+			}
 			$output .= '</button>';
 		}
 		if ( $show_save ) {
-			$output .= '<button type="button" class="ldj-journal-save-btn" title="' . esc_attr__( 'Save as PDF', 'lesson-journal' ) . '">';
-			$output .= '<span class="dashicons dashicons-media-default"></span>';
+			$output .= '<button type="button" class="ldj-journal-save-btn" title="' . esc_attr__( 'Download', 'lesson-journal' ) . '">';
+			if ( $is_text ) {
+				$output .= esc_html__( 'Download', 'lesson-journal' );
+			} else {
+				$output .= '<span class="dashicons dashicons-media-default"></span>';
+			}
 			$output .= '</button>';
 		}
 		if ( $show_print ) {
 			$output .= '<button type="button" class="ldj-print-btn" title="' . esc_attr__( 'Print', 'lesson-journal' ) . '">';
-			$output .= '<span class="dashicons dashicons-printer"></span>';
+			if ( $is_text ) {
+				$output .= esc_html__( 'Print', 'lesson-journal' );
+			} else {
+				$output .= '<span class="dashicons dashicons-printer"></span>';
+			}
 			$output .= '</button>';
 		}
 		$output .= '</div>';
