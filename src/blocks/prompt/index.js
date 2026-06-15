@@ -1,7 +1,7 @@
 import './editor.css';
 import { registerBlockType } from '@wordpress/blocks';
 import { useBlockProps, InspectorControls } from '@wordpress/block-editor';
-import { useState, useEffect, useCallback } from '@wordpress/element';
+import { useState, useEffect, useCallback, useRef } from '@wordpress/element';
 import {
 	ComboboxControl,
 	Button,
@@ -13,6 +13,130 @@ import {
 } from '@wordpress/components';
 import apiFetch from '@wordpress/api-fetch';
 import { __ } from '@wordpress/i18n';
+
+function PromptSettings( { prompt, onUpdated } ) {
+	const meta = prompt.meta || {};
+	const [ rows, setRows ] = useState( meta._ldj_rows || 5 );
+	const [ placeholder, setPlaceholder ] = useState( meta._ldj_placeholder || '' );
+	const [ required, setRequired ] = useState( !! meta._ldj_required );
+	const [ minChars, setMinChars ] = useState( meta._ldj_min_chars || 0 );
+	const [ maxChars, setMaxChars ] = useState( meta._ldj_max_chars || 0 );
+	const [ saving, setSaving ] = useState( false );
+	const [ dirty, setDirty ] = useState( false );
+	const [ notice, setNotice ] = useState( '' );
+	const mountedMeta = useRef( JSON.stringify( meta ) );
+
+	useEffect( () => {
+		const fresh = JSON.stringify( prompt.meta || {} );
+		if ( fresh !== mountedMeta.current ) {
+			mountedMeta.current = fresh;
+			const m = prompt.meta || {};
+			setRows( m._ldj_rows || 5 );
+			setPlaceholder( m._ldj_placeholder || '' );
+			setRequired( !! m._ldj_required );
+			setMinChars( m._ldj_min_chars || 0 );
+			setMaxChars( m._ldj_max_chars || 0 );
+			setDirty( false );
+		}
+	}, [ prompt ] );
+
+	function change( setter, value ) {
+		setter( value );
+		setDirty( true );
+		setNotice( '' );
+	}
+
+	function saveSettings() {
+		setSaving( true );
+		setNotice( '' );
+		const finalMinChars = required ? Math.max( 1, minChars ) : 0;
+		apiFetch( {
+			path: `/wp/v2/ldj-prompts/${ prompt.id }`,
+			method: 'POST',
+			data: {
+				meta: {
+					_ldj_rows: rows,
+					_ldj_placeholder: placeholder,
+					_ldj_required: required,
+					_ldj_min_chars: finalMinChars,
+					_ldj_max_chars: maxChars,
+				},
+			},
+		} )
+			.then( ( updated ) => {
+				setDirty( false );
+				setNotice( __( 'Saved.', 'lesson-journal' ) );
+				if ( onUpdated ) onUpdated( updated );
+				setTimeout( () => setNotice( '' ), 2000 );
+			} )
+			.catch( () => setNotice( __( 'Save failed.', 'lesson-journal' ) ) )
+			.finally( () => setSaving( false ) );
+	}
+
+	return (
+		<PanelBody title={ __( 'Prompt Settings', 'lesson-journal' ) } initialOpen={ false }>
+			<TextControl
+				label={ __( 'Number of lines', 'lesson-journal' ) }
+				type="number"
+				value={ rows }
+				onChange={ ( val ) => change( setRows, parseInt( val, 10 ) || 5 ) }
+				min={ 1 }
+				max={ 10 }
+				__nextHasNoMarginBottom
+			/>
+			<TextControl
+				label={ __( 'Placeholder text', 'lesson-journal' ) }
+				value={ placeholder }
+				onChange={ ( val ) => change( setPlaceholder, val ) }
+				__nextHasNoMarginBottom
+			/>
+			<ToggleControl
+				label={ __( 'Required', 'lesson-journal' ) }
+				help={ required
+					? __( 'Students must write at least the minimum characters.', 'lesson-journal' )
+					: __( 'Response is optional.', 'lesson-journal' )
+				}
+				checked={ required }
+				onChange={ ( val ) => {
+					change( setRequired, val );
+					if ( val && minChars < 1 ) change( setMinChars, 1 );
+					if ( ! val ) change( setMinChars, 0 );
+				} }
+			/>
+			{ required && (
+				<TextControl
+					label={ __( 'Min characters', 'lesson-journal' ) }
+					type="number"
+					value={ minChars }
+					onChange={ ( val ) => change( setMinChars, Math.max( 1, parseInt( val, 10 ) || 1 ) ) }
+					min={ 1 }
+					__nextHasNoMarginBottom
+				/>
+			) }
+			<TextControl
+				label={ __( 'Max characters', 'lesson-journal' ) }
+				help={ __( '0 = unlimited', 'lesson-journal' ) }
+				type="number"
+				value={ maxChars }
+				onChange={ ( val ) => change( setMaxChars, parseInt( val, 10 ) || 0 ) }
+				min={ 0 }
+				__nextHasNoMarginBottom
+			/>
+			{ dirty && (
+				<Button
+					variant="primary"
+					onClick={ saveSettings }
+					disabled={ saving }
+					isBusy={ saving }
+					style={ { marginTop: '8px' } }
+				>
+					{ saving ? __( 'Saving…', 'lesson-journal' ) : __( 'Save Settings', 'lesson-journal' ) }
+				</Button>
+			) }
+			{ notice && <p style={ { marginTop: '8px', color: notice === __( 'Saved.', 'lesson-journal' ) ? '#059669' : '#dc2626' } }>{ notice }</p> }
+		</PanelBody>
+	);
+}
 
 function PromptForm( { title, content, rows, placeholder, required, minChars, maxChars, onChange, onSave, saving, saveLabel, error, onError } ) {
 	return (
@@ -260,6 +384,19 @@ registerBlockType( 'ldj/prompt', {
 								{ __( 'Change Prompt', 'lesson-journal' ) }
 							</Button>
 						</PanelBody>
+						<PromptSettings
+							prompt={ selectedPrompt }
+							onUpdated={ ( updated ) => {
+								setSelectedPrompt( updated );
+								setPrompts( ( prev ) =>
+									prev.map( ( item ) =>
+										item.value === updated.id
+											? { value: updated.id, label: updated.title.rendered, post: updated }
+											: item
+									)
+								);
+							} }
+						/>
 					</InspectorControls>
 					<div { ...blockProps }>
 						<div

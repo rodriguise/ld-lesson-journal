@@ -21,9 +21,12 @@ A journaling companion for LearnDash LMS. Course designers define journal prompt
 - **Gutenberg Blocks** — `Prompt Group` and `Prompt` blocks for the lesson editor, plus a `Journal View` block for displaying entries
 - **Shortcode Fallback** — `[ldj_group]` / `[ldj]` / `[ldj_journal]` for classic editor users
 - **Completion Gating** — Optionally require journal entries before a lesson can be marked complete
+- **Required Prompts** — Per-prompt required toggle with minimum character enforcement
+- **Course Journal Page** — Virtual page at `/course-journal/` with lesson filtering and per-lesson pagination
 - **PDF Export** — Students can download their journal as a PDF
-- **Print Support** — Clean print layout with site logo, course title, and student name
+- **Print Support** — Clean print layout with site logo, course/lesson title, and student name
 - **Admin Entries Page** — Filterable list of all student entries under the LearnDash menu
+- **Inline Prompt Settings** — Edit prompt settings (rows, placeholder, required, min/max chars) directly from the block sidebar without leaving the page
 
 ## Gutenberg Blocks
 
@@ -33,17 +36,21 @@ Parent block that wraps one or more Prompt blocks. Found under the **LearnDash L
 
 | Setting | Description |
 |---------|-------------|
-| Required | When enabled, all prompts in the group must be completed before the student can mark the lesson complete |
+| Required for lesson completion | All prompts must be completed before the student can mark the lesson complete |
+| Show View Journal button | Show/hide the "View Journal" link that opens the course journal page (default: on) |
+| Prompts per page | Paginate prompts within the group (0 = show all) |
 | Heading | Optional heading displayed above the prompt group |
+| Instructions | Optional instructions text below the heading |
 
 ### Prompt
 
 Child block (must be inside a Prompt Group). Each block references a journal prompt post.
 
 - **Select existing** — Search and pick from published prompts
-- **Create inline** — Quick-create a prompt with plain text directly in the editor
+- **Create inline** — Quick-create a prompt with plain text directly in the editor (includes required, min/max chars)
 - **Full Editor** — Opens the prompt's CPT edit screen for rich formatting (headings, lists, bold, etc.)
 - **Refresh** — Reloads the prompt content after editing in the full editor
+- **Sidebar Settings** — Edit the prompt's settings (rows, placeholder, required, min/max chars) directly from the block sidebar without leaving the page. Changes are saved to the prompt post via the REST API.
 
 ### Journal View
 
@@ -56,7 +63,13 @@ Displays a student's journal entries for a course. Place this on any page or les
 | Show course title | Display the course title on screen (default: off) |
 | Show student name | Display the student's name on screen (default: off) |
 | Show print button | Show the print icon button (default: on) |
+| Show download button | Show the PDF download button (default: on) |
+| Show refresh button | Show the refresh button (default: on) |
+| Show lesson filter | Show a dropdown to filter entries by lesson (default: off) |
+| Show content inline | Show journal entries on screen (default: on). When off, only the toolbar is shown. |
+| Button style | Icons (compact) or Text labels |
 | Heading | Optional heading above the journal view |
+| Instructions | Optional instructions text below the heading |
 
 ## Shortcodes
 
@@ -65,7 +78,7 @@ Displays a student's journal entries for a course. Place this on any page or les
 Wraps one or more `[ldj]` shortcodes. Must be used on a LearnDash lesson or topic.
 
 ```
-[ldj_group required="1" heading="Reflection Questions"]
+[ldj_group required="1" heading="Reflection Questions" instructions="Take your time." per_page="2"]
   [ldj id="123"]
   [ldj id="456"]
 [/ldj_group]
@@ -75,6 +88,8 @@ Wraps one or more `[ldj]` shortcodes. Must be used on a LearnDash lesson or topi
 |-----------|---------|-------------|
 | `required` | `0` | Require all entries for lesson completion |
 | `heading` | | Optional heading text |
+| `instructions` | | Optional instructions text |
+| `per_page` | `0` | Prompts per page (0 = show all) |
 
 ### `[ldj]`
 
@@ -93,7 +108,7 @@ Renders a single prompt's textarea. Must be inside `[ldj_group]`.
 Renders the full journal view with pagination, print, and PDF export.
 
 ```
-[ldj_journal course_id="10" show_title="1" show_print="1" heading="My Journal"]
+[ldj_journal course_id="10" show_title="1" show_print="1" show_filter="1" heading="My Journal"]
 ```
 
 | Attribute | Default | Description |
@@ -103,7 +118,13 @@ Renders the full journal view with pagination, print, and PDF export.
 | `show_title` | `0` | Show course title on screen |
 | `show_student` | `0` | Show student name on screen |
 | `show_print` | `1` | Show print button |
+| `show_save` | `1` | Show PDF download button |
+| `show_refresh` | `1` | Show refresh button |
+| `show_filter` | `0` | Show lesson filter dropdown |
+| `show_content` | `1` | Show entries inline (0 = toolbar only) |
+| `button_style` | `icons` | `icons` or `text` |
 | `heading` | | Optional heading text |
+| `instructions` | | Optional instructions text |
 
 ## Journal Prompts (CPT)
 
@@ -117,10 +138,13 @@ Create and manage prompts under **LearnDash LMS → Journal Prompts**.
 
 | Field | Default | Description |
 |-------|---------|-------------|
-| Textarea Rows | 5 | Number of rows for the student textarea |
+| Number of lines | 5 | Number of rows for the student textarea |
 | Placeholder | | Placeholder text shown in the empty textarea |
-| Hint Text | | Guidance text displayed below the prompt in smaller font |
+| Required | off | When enabled, the student must write at least the minimum characters |
+| Min Characters | 1 | Minimum characters required (only shown when Required is on) |
 | Max Characters | 0 | Character limit (0 = unlimited) |
+
+These settings can also be edited directly from the block sidebar when a Prompt block is selected — no need to open the prompt CPT edit screen.
 
 ## Completion Gating
 
@@ -141,14 +165,28 @@ View all student entries under **LearnDash LMS → Journal Entries**.
 - View full entry text via modal
 - Bulk delete (requires `edit_others_posts` capability)
 
+## Course Journal Page
+
+The plugin registers a virtual page at `/course-journal/` that provides a dedicated full-page journal view for students.
+
+- Automatically accessible via the **View Journal** button in prompt groups
+- URL format: `/course-journal/?course_id=123`
+- Includes a lesson filter dropdown for navigating between lessons
+- Paginates by lesson when "All Lessons" is selected; shows all entries when a specific lesson is filtered
+- Topic entries display their parent lesson in the section header (e.g., "Lesson 1 | Topic 1")
+- Redirects to the login page if the user is not authenticated
+
+After first activation, visit **Settings → Permalinks → Save Changes** to flush rewrite rules.
+
 ## PDF Export & Print
 
-The Journal View includes two action buttons:
+The Journal View includes action buttons (configurable per instance):
 
-- **Save (disk icon)** — Generates and downloads a PDF of the full journal
-- **Print (printer icon)** — Opens the browser print dialog with a clean layout
+- **Download** — Generates and downloads a PDF of the full journal
+- **Print** — Opens the browser print dialog with a clean layout
+- **Refresh** — Reloads entries via AJAX
 
-Both include the site logo, course title, and student name in the header. The print layout hides all navigation and UI chrome.
+Both PDF and print include the site logo and a header formatted as "Site Name | Course Name | Lesson Name" along with the student name. The print layout hides all navigation and UI chrome.
 
 ## Development
 
@@ -187,6 +225,7 @@ src/
     class-ldj-ajax.php            # AJAX handlers
     class-ldj-shortcode.php       # [ldj_group] / [ldj]
     class-ldj-journal-shortcode.php  # [ldj_journal]
+    class-ldj-journal-page.php    # Virtual /course-journal/ page
     class-ldj-completion.php      # LearnDash gating
     class-ldj-admin-entries.php   # Admin list table
   blocks/
