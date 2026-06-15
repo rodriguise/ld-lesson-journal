@@ -11,6 +11,7 @@ import {
 	PanelBody,
 	Notice,
 } from '@wordpress/components';
+import { useSelect } from '@wordpress/data';
 import apiFetch from '@wordpress/api-fetch';
 import { __ } from '@wordpress/i18n';
 
@@ -25,6 +26,13 @@ function PromptSettings( { prompt, onUpdated } ) {
 	const [ dirty, setDirty ] = useState( false );
 	const [ notice, setNotice ] = useState( '' );
 	const mountedMeta = useRef( JSON.stringify( meta ) );
+	const dirtyRef = useRef( false );
+	const savingRef = useRef( false );
+
+	const isPostSaving = useSelect( ( select ) => {
+		return select( 'core/editor' ).isSavingPost() && ! select( 'core/editor' ).isAutosavingPost();
+	} );
+	const wasSaving = useRef( false );
 
 	useEffect( () => {
 		const fresh = JSON.stringify( prompt.meta || {} );
@@ -37,17 +45,27 @@ function PromptSettings( { prompt, onUpdated } ) {
 			setMinChars( m._ldj_min_chars || 0 );
 			setMaxChars( m._ldj_max_chars || 0 );
 			setDirty( false );
+			dirtyRef.current = false;
 		}
 	}, [ prompt ] );
+
+	useEffect( () => {
+		if ( isPostSaving && ! wasSaving.current && dirtyRef.current && ! savingRef.current ) {
+			doSave();
+		}
+		wasSaving.current = isPostSaving;
+	}, [ isPostSaving ] );
 
 	function change( setter, value ) {
 		setter( value );
 		setDirty( true );
+		dirtyRef.current = true;
 		setNotice( '' );
 	}
 
-	function saveSettings() {
+	function doSave() {
 		setSaving( true );
+		savingRef.current = true;
 		setNotice( '' );
 		const finalMinChars = required ? Math.max( 1, minChars ) : 0;
 		apiFetch( {
@@ -65,12 +83,20 @@ function PromptSettings( { prompt, onUpdated } ) {
 		} )
 			.then( ( updated ) => {
 				setDirty( false );
+				dirtyRef.current = false;
 				setNotice( __( 'Saved.', 'lesson-journal' ) );
 				if ( onUpdated ) onUpdated( updated );
 				setTimeout( () => setNotice( '' ), 2000 );
 			} )
 			.catch( () => setNotice( __( 'Save failed.', 'lesson-journal' ) ) )
-			.finally( () => setSaving( false ) );
+			.finally( () => {
+				setSaving( false );
+				savingRef.current = false;
+			} );
+	}
+
+	function saveSettings() {
+		doSave();
 	}
 
 	return (

@@ -37,7 +37,7 @@ class LDJ_Post_Type {
 			'show_in_menu'      => 'learndash-lms',
 			'show_in_rest'      => true,
 			'rest_base'         => 'ldj-prompts',
-			'supports'          => array( 'title', 'editor' ),
+			'supports'          => array( 'title', 'editor', 'custom-fields' ),
 			'capability_type'   => 'post',
 			'has_archive'       => false,
 			'hierarchical'      => false,

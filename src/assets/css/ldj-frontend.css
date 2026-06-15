@@ -180,6 +180,10 @@
 	margin-bottom: 0.5em;
 }
 
+.ldj-group-actions .ldj-view-journal {
+	margin-left: auto;
+}
+
 .ldj-save-group {
 	display: inline-block;
 	padding: 0.6em 1.5em;
@@ -351,11 +355,11 @@
 
 /* === View Journal Link === */
 
-.ldj-view-journal {
+.ldj-group .ldj-group-actions a.ldj-view-journal.ldj-view-journal:not(.screen-reader-shortcut):not(.button) {
 	display: inline-block;
 	padding: 0.6em 1.5em;
 	background: #f3f4f6;
-	border: 1px solid #d1d5db;
+	border: 1px solid #d1d5db !important;
 	border-radius: 6px;
 	font-size: 1em;
 	color: #374151;
@@ -364,7 +368,7 @@
 	transition: background 0.2s;
 }
 
-.ldj-view-journal:hover {
+.ldj-group .ldj-group-actions a.ldj-view-journal.ldj-view-journal:not(.screen-reader-shortcut):not(.button):hover {
 	background: #e5e7eb;
 	color: #1f2937;
 }
