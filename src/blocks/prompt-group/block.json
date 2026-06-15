@@ -24,6 +24,10 @@
 		"instructions": {
 			"type": "string",
 			"default": ""
+		},
+		"showViewJournal": {
+			"type": "boolean",
+			"default": true
 		}
 	},
 	"supports": {

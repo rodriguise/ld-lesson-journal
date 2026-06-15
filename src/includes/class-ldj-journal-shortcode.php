@@ -270,7 +270,7 @@ class LDJ_Journal_Shortcode {
 						. esc_html__( '(edited)', 'lesson-journal' )
 						. '</span>';
 				}
-				$output .= ' <span class="ldj-journal-topic">| <a href="' . esc_url( get_permalink( $group_lesson_id ) ) . '" target="_blank" rel="noopener">' . esc_html( $lesson_title ) . '</a></span>';
+				$output .= ' <span class="ldj-journal-topic">| <a href="' . esc_url( get_permalink( $group_lesson_id ) ) . '" target="_blank" rel="noopener">' . esc_html( $section_title ) . '</a></span>';
 				$output .= '</div>';
 				$output .= '</div>';
 

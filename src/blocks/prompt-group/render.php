@@ -4,8 +4,9 @@ if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
 
-$required  = ! empty( $attributes['required'] );
-$per_page  = absint( $attributes['perPage'] ?? 0 );
+$required          = ! empty( $attributes['required'] );
+$per_page          = absint( $attributes['perPage'] ?? 0 );
+$show_view_journal = $attributes['showViewJournal'] ?? true;
 $lesson_id = get_the_ID();
 $post_type = get_post_type( $lesson_id );
 $user_id   = get_current_user_id();
@@ -75,7 +76,7 @@ wp_localize_script( 'ldj-frontend', 'ldjData', array(
 		if ( ! $course_id ) {
 			$course_id = (int) get_post_meta( $lesson_id, 'course_id', true );
 		}
-		if ( $course_id > 0 ) :
+		if ( $course_id > 0 && $show_view_journal ) :
 		?>
 		<a href="<?php echo esc_url( LDJ_Journal_Page::get_url( $course_id ) ); ?>" class="ldj-view-journal" target="_blank" rel="noopener"><?php esc_html_e( 'View Journal', 'lesson-journal' ); ?></a>
 		<?php endif; ?>

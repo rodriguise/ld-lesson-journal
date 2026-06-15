@@ -24,8 +24,13 @@ $user_id   = get_current_user_id();
 
 $rows        = (int) get_post_meta( $prompt_id, '_ldj_rows', true ) ?: 5;
 $placeholder = get_post_meta( $prompt_id, '_ldj_placeholder', true );
+$required    = (bool) get_post_meta( $prompt_id, '_ldj_required', true );
 $min_chars   = (int) get_post_meta( $prompt_id, '_ldj_min_chars', true );
 $max_chars   = (int) get_post_meta( $prompt_id, '_ldj_max_chars', true );
+
+if ( $required && $min_chars < 1 ) {
+	$min_chars = 1;
+}
 
 $existing   = $user_id ? LDJ_Entry::get( $prompt_id, $user_id, $lesson_id ) : null;
 $entry_text = $existing ? $existing->entry_text : '';

@@ -7,13 +7,14 @@ import {
 	Button,
 	TextControl,
 	TextareaControl,
+	ToggleControl,
 	PanelBody,
 	Notice,
 } from '@wordpress/components';
 import apiFetch from '@wordpress/api-fetch';
 import { __ } from '@wordpress/i18n';
 
-function PromptForm( { title, content, rows, placeholder, maxChars, onChange, onSave, saving, saveLabel, error, onError } ) {
+function PromptForm( { title, content, rows, placeholder, required, minChars, maxChars, onChange, onSave, saving, saveLabel, error, onError } ) {
 	return (
 		<>
 			{ error && (
@@ -58,6 +59,35 @@ function PromptForm( { title, content, rows, placeholder, maxChars, onChange, on
 				__nextHasNoMarginBottom
 			/>
 
+			<ToggleControl
+				label={ __( 'Required', 'lesson-journal' ) }
+				help={ required
+					? __( 'Students must write at least the minimum characters.', 'lesson-journal' )
+					: __( 'Response is optional.', 'lesson-journal' )
+				}
+				checked={ required }
+				onChange={ ( val ) => {
+					onChange( { required: val } );
+					if ( val && minChars < 1 ) {
+						onChange( { minChars: 1 } );
+					}
+					if ( ! val ) {
+						onChange( { minChars: 0 } );
+					}
+				} }
+			/>
+
+			{ required && (
+				<TextControl
+					label={ __( 'Min characters', 'lesson-journal' ) }
+					type="number"
+					value={ minChars }
+					onChange={ ( val ) => onChange( { minChars: Math.max( 1, parseInt( val, 10 ) || 1 ) } ) }
+					min={ 1 }
+					__nextHasNoMarginBottom
+				/>
+			) }
+
 			<TextControl
 				label={ __( 'Max characters', 'lesson-journal' ) }
 				help={ __( 'Limits how much the student can write. Set to 0 for no limit.', 'lesson-journal' ) }
@@ -97,6 +127,8 @@ registerBlockType( 'ldj/prompt', {
 		const [ formContent, setFormContent ] = useState( '' );
 		const [ formRows, setFormRows ] = useState( 5 );
 		const [ formPlaceholder, setFormPlaceholder ] = useState( '' );
+		const [ formRequired, setFormRequired ] = useState( false );
+		const [ formMinChars, setFormMinChars ] = useState( 0 );
 		const [ formMaxChars, setFormMaxChars ] = useState( 0 );
 
 		useEffect( () => {
@@ -135,6 +167,8 @@ registerBlockType( 'ldj/prompt', {
 			setFormContent( '' );
 			setFormRows( 5 );
 			setFormPlaceholder( '' );
+			setFormRequired( false );
+			setFormMinChars( 0 );
 			setFormMaxChars( 0 );
 		}
 
@@ -143,6 +177,8 @@ registerBlockType( 'ldj/prompt', {
 			if ( 'content' in updates ) setFormContent( updates.content );
 			if ( 'rows' in updates ) setFormRows( updates.rows );
 			if ( 'placeholder' in updates ) setFormPlaceholder( updates.placeholder );
+			if ( 'required' in updates ) setFormRequired( updates.required );
+			if ( 'minChars' in updates ) setFormMinChars( updates.minChars );
 			if ( 'maxChars' in updates ) setFormMaxChars( updates.maxChars );
 		}
 
@@ -162,6 +198,8 @@ registerBlockType( 'ldj/prompt', {
 					meta: {
 						_ldj_rows: formRows,
 						_ldj_placeholder: formPlaceholder,
+						_ldj_required: formRequired,
+						_ldj_min_chars: formRequired ? Math.max( 1, formMinChars ) : 0,
 						_ldj_max_chars: formMaxChars,
 					},
 				},
@@ -289,6 +327,8 @@ registerBlockType( 'ldj/prompt', {
 						content={ formContent }
 						rows={ formRows }
 						placeholder={ formPlaceholder }
+						required={ formRequired }
+						minChars={ formMinChars }
 						maxChars={ formMaxChars }
 						onChange={ handleFormChange }
 						onSave={ createPrompt }

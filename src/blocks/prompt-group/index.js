@@ -25,6 +25,11 @@ registerBlockType( 'ldj/prompt-group', {
 							checked={ attributes.required }
 							onChange={ ( val ) => setAttributes( { required: val } ) }
 						/>
+						<ToggleControl
+							label={ __( 'Show View Journal button', 'lesson-journal' ) }
+							checked={ attributes.showViewJournal }
+							onChange={ ( val ) => setAttributes( { showViewJournal: val } ) }
+						/>
 						<RangeControl
 							label={ __( 'Prompts per page', 'lesson-journal' ) }
 							help={ attributes.perPage > 0

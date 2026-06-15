@@ -80,6 +80,10 @@ class LDJ_Post_Type {
 				'type'    => 'string',
 				'default' => '',
 			),
+			'_ldj_required'    => array(
+				'type'    => 'boolean',
+				'default' => false,
+			),
 			'_ldj_min_chars'   => array(
 				'type'    => 'integer',
 				'default' => 0,
@@ -91,12 +95,19 @@ class LDJ_Post_Type {
 		);
 
 		foreach ( $meta_fields as $key => $args ) {
+			$sanitizer = 'sanitize_text_field';
+			if ( $args['type'] === 'integer' ) {
+				$sanitizer = 'absint';
+			} elseif ( $args['type'] === 'boolean' ) {
+				$sanitizer = 'rest_sanitize_boolean';
+			}
+
 			register_post_meta( 'ldj_prompt', $key, array(
 				'show_in_rest'      => true,
 				'single'            => true,
 				'type'              => $args['type'],
 				'default'           => $args['default'],
-				'sanitize_callback' => $args['type'] === 'integer' ? 'absint' : 'sanitize_text_field',
+				'sanitize_callback' => $sanitizer,
 				'auth_callback'     => function () {
 					return current_user_can( 'edit_posts' );
 				},
@@ -120,8 +131,13 @@ class LDJ_Post_Type {
 
 		$rows        = (int) get_post_meta( $post->ID, '_ldj_rows', true ) ?: 5;
 		$placeholder = get_post_meta( $post->ID, '_ldj_placeholder', true );
+		$required    = (bool) get_post_meta( $post->ID, '_ldj_required', true );
 		$min_chars   = (int) get_post_meta( $post->ID, '_ldj_min_chars', true );
 		$max_chars   = (int) get_post_meta( $post->ID, '_ldj_max_chars', true );
+
+		if ( $required && $min_chars < 1 ) {
+			$min_chars = 1;
+		}
 		?>
 		<p>
 			<label for="ldj-rows"><?php esc_html_e( 'Number of lines', 'lesson-journal' ); ?></label><br>
@@ -132,15 +148,36 @@ class LDJ_Post_Type {
 			<input type="text" id="ldj-placeholder" name="_ldj_placeholder" value="<?php echo esc_attr( $placeholder ); ?>" class="widefat">
 		</p>
 		<p>
+			<label for="ldj-required">
+				<input type="checkbox" id="ldj-required" name="_ldj_required" value="1" <?php checked( $required ); ?>>
+				<?php esc_html_e( 'Required', 'lesson-journal' ); ?>
+			</label>
+		</p>
+		<p id="ldj-min-chars-row" style="<?php echo $required ? '' : 'display:none'; ?>">
 			<label for="ldj-min-chars"><?php esc_html_e( 'Min characters', 'lesson-journal' ); ?></label><br>
-			<input type="number" id="ldj-min-chars" name="_ldj_min_chars" value="<?php echo esc_attr( $min_chars ); ?>" min="0" class="small-text">
-			<span class="description"><?php esc_html_e( '0 = no minimum', 'lesson-journal' ); ?></span>
+			<input type="number" id="ldj-min-chars" name="_ldj_min_chars" value="<?php echo esc_attr( $min_chars ); ?>" min="1" class="small-text">
 		</p>
 		<p>
 			<label for="ldj-max-chars"><?php esc_html_e( 'Max characters', 'lesson-journal' ); ?></label><br>
 			<input type="number" id="ldj-max-chars" name="_ldj_max_chars" value="<?php echo esc_attr( $max_chars ); ?>" min="0" class="small-text">
 			<span class="description"><?php esc_html_e( '0 = unlimited', 'lesson-journal' ); ?></span>
 		</p>
+		<script>
+		(function(){
+			var cb = document.getElementById('ldj-required');
+			var row = document.getElementById('ldj-min-chars-row');
+			var input = document.getElementById('ldj-min-chars');
+			cb.addEventListener('change', function(){
+				if (cb.checked) {
+					row.style.display = '';
+					if (parseInt(input.value,10) < 1) input.value = '1';
+				} else {
+					row.style.display = 'none';
+					input.value = '0';
+				}
+			});
+		})();
+		</script>
 		<?php
 	}
 
@@ -161,9 +198,20 @@ class LDJ_Post_Type {
 			return;
 		}
 
+		$required = ! empty( $_POST['_ldj_required'] );
+		update_post_meta( $post_id, '_ldj_required', $required );
+
+		$min_chars = absint( $_POST['_ldj_min_chars'] ?? 0 );
+		if ( $required && $min_chars < 1 ) {
+			$min_chars = 1;
+		}
+		if ( ! $required ) {
+			$min_chars = 0;
+		}
+		update_post_meta( $post_id, '_ldj_min_chars', $min_chars );
+
 		$fields = array(
 			'_ldj_rows'      => 'absint',
-			'_ldj_min_chars' => 'absint',
 			'_ldj_max_chars' => 'absint',
 		);
 
