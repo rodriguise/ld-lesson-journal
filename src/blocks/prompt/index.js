@@ -17,6 +17,7 @@ import { __ } from '@wordpress/i18n';
 
 function PromptSettings( { prompt, onUpdated } ) {
 	const meta = prompt.meta || {};
+	const [ description, setDescription ] = useState( meta._ldj_description || '' );
 	const [ rows, setRows ] = useState( meta._ldj_rows || 5 );
 	const [ placeholder, setPlaceholder ] = useState( meta._ldj_placeholder || '' );
 	const [ required, setRequired ] = useState( !! meta._ldj_required );
@@ -39,6 +40,7 @@ function PromptSettings( { prompt, onUpdated } ) {
 		if ( fresh !== mountedMeta.current ) {
 			mountedMeta.current = fresh;
 			const m = prompt.meta || {};
+			setDescription( m._ldj_description || '' );
 			setRows( m._ldj_rows || 5 );
 			setPlaceholder( m._ldj_placeholder || '' );
 			setRequired( !! m._ldj_required );
@@ -73,6 +75,7 @@ function PromptSettings( { prompt, onUpdated } ) {
 			method: 'POST',
 			data: {
 				meta: {
+					_ldj_description: description,
 					_ldj_rows: rows,
 					_ldj_placeholder: placeholder,
 					_ldj_required: required,
@@ -101,6 +104,13 @@ function PromptSettings( { prompt, onUpdated } ) {
 
 	return (
 		<PanelBody title={ __( 'Prompt Settings', 'lesson-journal' ) } initialOpen={ false }>
+			<TextControl
+				label={ __( 'Description', 'lesson-journal' ) }
+				help={ __( 'Short label for the completion checklist (optional).', 'lesson-journal' ) }
+				value={ description }
+				onChange={ ( val ) => change( setDescription, val ) }
+				__nextHasNoMarginBottom
+			/>
 			<TextControl
 				label={ __( 'Number of lines', 'lesson-journal' ) }
 				type="number"
@@ -164,7 +174,7 @@ function PromptSettings( { prompt, onUpdated } ) {
 	);
 }
 
-function PromptForm( { title, content, rows, placeholder, required, minChars, maxChars, onChange, onSave, saving, saveLabel, error, onError } ) {
+function PromptForm( { title, description, content, rows, placeholder, required, minChars, maxChars, onChange, onSave, saving, saveLabel, error, onError } ) {
 	return (
 		<>
 			{ error && (
@@ -178,6 +188,14 @@ function PromptForm( { title, content, rows, placeholder, required, minChars, ma
 				help={ __( 'Internal name for organizing prompts — not shown to students.', 'lesson-journal' ) }
 				value={ title }
 				onChange={ ( val ) => onChange( { title: val } ) }
+				__nextHasNoMarginBottom
+			/>
+
+			<TextControl
+				label={ __( 'Description', 'lesson-journal' ) }
+				help={ __( 'Short label for the completion checklist (optional).', 'lesson-journal' ) }
+				value={ description }
+				onChange={ ( val ) => onChange( { description: val } ) }
 				__nextHasNoMarginBottom
 			/>
 
@@ -274,6 +292,7 @@ registerBlockType( 'ldj/prompt', {
 		const [ saving, setSaving ] = useState( false );
 
 		const [ formTitle, setFormTitle ] = useState( '' );
+		const [ formDescription, setFormDescription ] = useState( '' );
 		const [ formContent, setFormContent ] = useState( '' );
 		const [ formRows, setFormRows ] = useState( 5 );
 		const [ formPlaceholder, setFormPlaceholder ] = useState( '' );
@@ -314,6 +333,7 @@ registerBlockType( 'ldj/prompt', {
 
 		function resetForm() {
 			setFormTitle( '' );
+			setFormDescription( '' );
 			setFormContent( '' );
 			setFormRows( 5 );
 			setFormPlaceholder( '' );
@@ -324,6 +344,7 @@ registerBlockType( 'ldj/prompt', {
 
 		function handleFormChange( updates ) {
 			if ( 'title' in updates ) setFormTitle( updates.title );
+			if ( 'description' in updates ) setFormDescription( updates.description );
 			if ( 'content' in updates ) setFormContent( updates.content );
 			if ( 'rows' in updates ) setFormRows( updates.rows );
 			if ( 'placeholder' in updates ) setFormPlaceholder( updates.placeholder );
@@ -346,6 +367,7 @@ registerBlockType( 'ldj/prompt', {
 					content: formContent,
 					status: 'publish',
 					meta: {
+						_ldj_description: formDescription,
 						_ldj_rows: formRows,
 						_ldj_placeholder: formPlaceholder,
 						_ldj_required: formRequired,
@@ -487,6 +509,7 @@ registerBlockType( 'ldj/prompt', {
 
 					<PromptForm
 						title={ formTitle }
+						description={ formDescription }
 						content={ formContent }
 						rows={ formRows }
 						placeholder={ formPlaceholder }

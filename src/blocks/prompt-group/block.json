@@ -28,6 +28,10 @@
 		"showViewJournal": {
 			"type": "boolean",
 			"default": true
+		},
+		"showNumbers": {
+			"type": "boolean",
+			"default": false
 		}
 	},
 	"supports": {

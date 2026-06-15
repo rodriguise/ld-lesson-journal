@@ -15,3 +15,17 @@
 	border-top: 1px solid #e5e7eb;
 	margin: 1em 0;
 }
+
+.ldj-group--editor.ldj-group--numbered {
+	counter-reset: ldj-prompt;
+}
+
+.ldj-group--editor.ldj-group--numbered .ldj-prompt--editor {
+	counter-increment: ldj-prompt;
+}
+
+.ldj-group--editor.ldj-group--numbered .ldj-prompt--editor .ldj-prompt-text::before,
+.ldj-group--editor.ldj-group--numbered .ldj-prompt--editor .ldj-prompt-picker h4::before {
+	content: counter(ldj-prompt) ". ";
+	font-weight: 600;
+}

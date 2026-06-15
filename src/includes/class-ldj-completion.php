@@ -6,7 +6,8 @@ if ( ! defined( 'ABSPATH' ) ) {
 
 class LDJ_Completion {
 
-	private static $cache = array();
+	private static $cache     = array();
+	private static $positions = array();
 
 	public static function register() {
 		add_filter( 'learndash_mark_complete', array( __CLASS__, 'gate_mark_complete_button' ), 10, 2 );
@@ -60,13 +61,17 @@ class LDJ_Completion {
 		$items = array();
 
 		foreach ( $incomplete as $prompt_id ) {
-			$title = get_the_title( $prompt_id );
-			if ( ! $title ) {
-				$title = sprintf( __( 'Prompt #%d', 'lesson-journal' ), $prompt_id );
+			$description = get_post_meta( $prompt_id, '_ldj_description', true );
+			if ( $description ) {
+				$label = $description;
+			} elseif ( isset( self::$positions[ $prompt_id ] ) ) {
+				$label = sprintf( __( 'Prompt #%d', 'lesson-journal' ), self::$positions[ $prompt_id ] );
+			} else {
+				$label = get_the_title( $prompt_id ) ?: sprintf( __( 'Prompt #%d', 'lesson-journal' ), $prompt_id );
 			}
 			$items[] = '<li>' . sprintf(
 				esc_html__( 'Complete journal entry: %s', 'lesson-journal' ),
-				'<strong>' . esc_html( $title ) . '</strong>'
+				'<strong>' . esc_html( $label ) . '</strong>'
 			) . '</li>';
 		}
 
@@ -179,9 +184,13 @@ class LDJ_Completion {
 				continue;
 			}
 
+			$position = 0;
 			foreach ( $block['innerBlocks'] as $inner ) {
 				if ( $inner['blockName'] === 'ldj/prompt' && ! empty( $inner['attrs']['promptId'] ) ) {
-					$prompt_ids[] = absint( $inner['attrs']['promptId'] );
+					$position++;
+					$pid = absint( $inner['attrs']['promptId'] );
+					$prompt_ids[]             = $pid;
+					self::$positions[ $pid ] = $position;
 				}
 			}
 		}
@@ -208,11 +217,15 @@ class LDJ_Completion {
 				continue;
 			}
 
-			$inner = $groups[2][ $i ];
+			$inner    = $groups[2][ $i ];
+			$position = 0;
 
 			if ( preg_match_all( '/\[ldj\s+[^\]]*id=["\']?(\d+)["\']?[^\]]*\]/', $inner, $ldj_matches ) ) {
 				foreach ( $ldj_matches[1] as $id ) {
-					$prompt_ids[] = absint( $id );
+					$position++;
+					$pid = absint( $id );
+					$prompt_ids[]             = $pid;
+					self::$positions[ $pid ] = $position;
 				}
 			}
 		}

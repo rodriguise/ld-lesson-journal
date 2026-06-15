@@ -7,7 +7,7 @@ import { __ } from '@wordpress/i18n';
 registerBlockType( 'ldj/prompt-group', {
 	edit( { attributes, setAttributes } ) {
 		const blockProps = useBlockProps( {
-			className: 'ldj-group ldj-group--editor',
+			className: 'ldj-group ldj-group--editor' + ( attributes.showNumbers ? ' ldj-group--numbered' : '' ),
 		} );
 
 		const hasHeader = attributes.heading || attributes.instructions;
@@ -29,6 +29,12 @@ registerBlockType( 'ldj/prompt-group', {
 							label={ __( 'Show View Journal button', 'lesson-journal' ) }
 							checked={ attributes.showViewJournal }
 							onChange={ ( val ) => setAttributes( { showViewJournal: val } ) }
+						/>
+						<ToggleControl
+							label={ __( 'Number prompts', 'lesson-journal' ) }
+							help={ __( 'Show 1., 2., 3. before each prompt.', 'lesson-journal' ) }
+							checked={ attributes.showNumbers }
+							onChange={ ( val ) => setAttributes( { showNumbers: val } ) }
 						/>
 						<RangeControl
 							label={ __( 'Prompts per page', 'lesson-journal' ) }

@@ -14,6 +14,21 @@
 	margin: 1em 0;
 }
 
+/* === Numbered Prompts === */
+
+.ldj-group--numbered {
+	counter-reset: ldj-prompt;
+}
+
+.ldj-group--numbered > .ldj-prompt-wrap {
+	counter-increment: ldj-prompt;
+}
+
+.ldj-group--numbered > .ldj-prompt-wrap > .ldj-prompt-text > p:first-child::before {
+	content: counter(ldj-prompt) ". ";
+	font-weight: 600;
+}
+
 /* === Prompt Wrap === */
 
 .ldj-prompt-wrap {
@@ -73,6 +88,15 @@
 
 .ldj-min-chars-label {
 	color: #9ca3af;
+}
+
+/* === Prompt Description Label === */
+
+.ldj-prompt-description {
+	margin: 0.35em 0 0;
+	font-size: 0.78em;
+	color: #9ca3af;
+	font-style: italic;
 }
 
 /* === Completed Entry Display === */

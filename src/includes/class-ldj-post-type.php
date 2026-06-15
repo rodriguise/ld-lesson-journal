@@ -80,6 +80,10 @@ class LDJ_Post_Type {
 				'type'    => 'string',
 				'default' => '',
 			),
+			'_ldj_description' => array(
+				'type'    => 'string',
+				'default' => '',
+			),
 			'_ldj_required'    => array(
 				'type'    => 'boolean',
 				'default' => false,
@@ -129,6 +133,7 @@ class LDJ_Post_Type {
 	public static function render_meta_box( $post ) {
 		wp_nonce_field( 'ldj_prompt_meta', 'ldj_prompt_meta_nonce' );
 
+		$description = get_post_meta( $post->ID, '_ldj_description', true );
 		$rows        = (int) get_post_meta( $post->ID, '_ldj_rows', true ) ?: 5;
 		$placeholder = get_post_meta( $post->ID, '_ldj_placeholder', true );
 		$required    = (bool) get_post_meta( $post->ID, '_ldj_required', true );
@@ -139,6 +144,11 @@ class LDJ_Post_Type {
 			$min_chars = 1;
 		}
 		?>
+		<p>
+			<label for="ldj-description"><?php esc_html_e( 'Description', 'lesson-journal' ); ?></label><br>
+			<input type="text" id="ldj-description" name="_ldj_description" value="<?php echo esc_attr( $description ); ?>" class="widefat">
+			<span class="description"><?php esc_html_e( 'Short label shown in the completion checklist (optional).', 'lesson-journal' ); ?></span>
+		</p>
 		<p>
 			<label for="ldj-rows"><?php esc_html_e( 'Number of lines', 'lesson-journal' ); ?></label><br>
 			<input type="number" id="ldj-rows" name="_ldj_rows" value="<?php echo esc_attr( $rows ); ?>" min="1" max="10" class="small-text">
@@ -221,7 +231,7 @@ class LDJ_Post_Type {
 			}
 		}
 
-		$text_fields = array( '_ldj_placeholder' );
+		$text_fields = array( '_ldj_placeholder', '_ldj_description' );
 
 		foreach ( $text_fields as $key ) {
 			if ( isset( $_POST[ $key ] ) ) {

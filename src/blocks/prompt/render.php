@@ -24,6 +24,7 @@ $user_id   = get_current_user_id();
 
 $rows        = (int) get_post_meta( $prompt_id, '_ldj_rows', true ) ?: 5;
 $placeholder = get_post_meta( $prompt_id, '_ldj_placeholder', true );
+$description = get_post_meta( $prompt_id, '_ldj_description', true );
 $required    = (bool) get_post_meta( $prompt_id, '_ldj_required', true );
 $min_chars   = (int) get_post_meta( $prompt_id, '_ldj_min_chars', true );
 $max_chars   = (int) get_post_meta( $prompt_id, '_ldj_max_chars', true );
@@ -68,5 +69,10 @@ $has_entry  = ! empty( $entry_text );
 				<span class="ldj-min-chars-label"><?php printf( esc_html__( '(min %d)', 'lesson-journal' ), $min_chars ); ?></span>
 			<?php endif; ?>
 		</div>
+
 	</div>
+
+	<?php if ( $description ) : ?>
+		<p class="ldj-prompt-description"><?php echo esc_html( ucfirst( $description ) ); ?></p>
+	<?php endif; ?>
 </div>

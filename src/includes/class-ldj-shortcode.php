@@ -57,10 +57,12 @@ class LDJ_Shortcode {
 			'heading'      => '',
 			'instructions' => '',
 			'per_page'     => '0',
+			'numbers'      => '0',
 		), $atts, 'ldj_group' );
 
-		$required  = filter_var( $atts['required'], FILTER_VALIDATE_BOOLEAN );
-		$per_page  = absint( $atts['per_page'] );
+		$required     = filter_var( $atts['required'], FILTER_VALIDATE_BOOLEAN );
+		$per_page     = absint( $atts['per_page'] );
+		$show_numbers = filter_var( $atts['numbers'], FILTER_VALIDATE_BOOLEAN );
 		$lesson_id = get_the_ID();
 		$post_type = get_post_type( $lesson_id );
 
@@ -81,7 +83,12 @@ class LDJ_Shortcode {
 
 		$inner = do_shortcode( $content );
 
-		$output  = '<div class="ldj-group" data-lesson-id="' . esc_attr( $lesson_id ) . '" data-required="' . esc_attr( $required ? '1' : '0' ) . '"';
+		$group_class = 'ldj-group';
+		if ( $show_numbers ) {
+			$group_class .= ' ldj-group--numbered';
+		}
+
+		$output  = '<div class="' . esc_attr( $group_class ) . '" data-lesson-id="' . esc_attr( $lesson_id ) . '" data-required="' . esc_attr( $required ? '1' : '0' ) . '"';
 		if ( $per_page > 0 ) {
 			$output .= ' data-per-page="' . esc_attr( $per_page ) . '"';
 		}
@@ -143,6 +150,7 @@ class LDJ_Shortcode {
 
 		$rows        = (int) get_post_meta( $prompt_id, '_ldj_rows', true ) ?: 5;
 		$placeholder = get_post_meta( $prompt_id, '_ldj_placeholder', true );
+		$description = get_post_meta( $prompt_id, '_ldj_description', true );
 		$required    = (bool) get_post_meta( $prompt_id, '_ldj_required', true );
 		$min_chars   = (int) get_post_meta( $prompt_id, '_ldj_min_chars', true );
 		$max_chars   = (int) get_post_meta( $prompt_id, '_ldj_max_chars', true );
@@ -200,6 +208,11 @@ class LDJ_Shortcode {
 		$output .= '</div>';
 
 		$output .= '</div>';
+
+		if ( $description ) {
+			$output .= '<p class="ldj-prompt-description">' . esc_html( ucfirst( $description ) ) . '</p>';
+		}
+
 		$output .= '</div>';
 
 		return $output;
