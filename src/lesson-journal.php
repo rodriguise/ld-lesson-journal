@@ -30,6 +30,8 @@ require_once LESSON_JOURNAL_PATH . 'includes/class-ldj-shortcode.php';
 require_once LESSON_JOURNAL_PATH . 'includes/class-ldj-journal-shortcode.php';
 require_once LESSON_JOURNAL_PATH . 'includes/class-ldj-completion.php';
 require_once LESSON_JOURNAL_PATH . 'includes/class-ldj-admin-entries.php';
+require_once LESSON_JOURNAL_PATH . 'includes/class-ldj-admin-grade.php';
+require_once LESSON_JOURNAL_PATH . 'includes/class-ldj-gradebook.php';
 require_once LESSON_JOURNAL_PATH . 'includes/class-ldj-journal-page.php';
 
 function lesson_journal_learndash_active() {
@@ -54,8 +56,11 @@ function lesson_journal_init() {
 	LDJ_Completion::register();
 	LDJ_Journal_Page::register();
 
+	LDJ_Gradebook::register();
+
 	if ( is_admin() ) {
 		LDJ_Admin_Entries::register();
+		LDJ_Admin_Grade::register();
 		LDJ_DB::maybe_upgrade();
 	}
 }
@@ -98,6 +103,7 @@ function lesson_journal_register_blocks() {
 	register_block_type( LESSON_JOURNAL_PATH . 'blocks/prompt-group' );
 	register_block_type( LESSON_JOURNAL_PATH . 'blocks/prompt' );
 	register_block_type( LESSON_JOURNAL_PATH . 'blocks/journal-view' );
+	register_block_type( LESSON_JOURNAL_PATH . 'blocks/screen-only' );
 }
 add_action( 'init', 'lesson_journal_register_blocks' );
 

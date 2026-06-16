@@ -17,6 +17,15 @@
 			"type": "string",
 			"default": ""
 		},
+		"title": {
+			"type": "string",
+			"default": ""
+		},
+		"display": {
+			"type": "string",
+			"default": "standard",
+			"enum": [ "standard", "paginated", "accordion" ]
+		},
 		"perPage": {
 			"type": "number",
 			"default": 0

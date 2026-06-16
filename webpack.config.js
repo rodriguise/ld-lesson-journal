@@ -7,6 +7,7 @@ module.exports = {
 		'prompt-group/index': path.resolve( __dirname, 'src/blocks/prompt-group/index.js' ),
 		'prompt/index': path.resolve( __dirname, 'src/blocks/prompt/index.js' ),
 		'journal-view/index': path.resolve( __dirname, 'src/blocks/journal-view/index.js' ),
+		'screen-only/index': path.resolve( __dirname, 'src/blocks/screen-only/index.js' ),
 	},
 	output: {
 		...defaultConfig.output,

@@ -9,14 +9,16 @@ class LDJ_Ajax {
 	public static function register() {
 		add_action( 'wp_ajax_ldj_save_group', array( __CLASS__, 'save_group' ) );
 		add_action( 'wp_ajax_ldj_delete_entry', array( __CLASS__, 'delete_entry' ) );
+		add_action( 'wp_ajax_ldj_grade_entry', array( __CLASS__, 'grade_entry' ) );
 	}
 
 	public static function save_group() {
 		check_ajax_referer( 'ldj_entry_nonce', 'nonce' );
 
-		$user_id   = get_current_user_id();
-		$lesson_id = absint( $_POST['lesson_id'] ?? 0 );
-		$entries   = $_POST['entries'] ?? array();
+		$user_id     = get_current_user_id();
+		$lesson_id   = absint( $_POST['lesson_id'] ?? 0 );
+		$entries     = $_POST['entries'] ?? array();
+		$group_title = sanitize_text_field( $_POST['group_title'] ?? '' );
 
 		if ( ! $user_id ) {
 			wp_send_json_error( array( 'message' => __( 'You must be logged in.', 'lesson-journal' ) ) );
@@ -71,12 +73,61 @@ class LDJ_Ajax {
 			wp_send_json_error( array( 'message' => implode( ' ', $errors ) ) );
 		}
 
-		$saved = LDJ_Entry::save_many( $entries, $user_id, $lesson_id );
+		$saved = LDJ_Entry::save_many( $entries, $user_id, $lesson_id, $group_title );
 
 		wp_send_json_success( array(
 			'message' => __( 'Journal entries saved.', 'lesson-journal' ),
 			'saved'   => $saved,
 		) );
+	}
+
+	public static function grade_entry() {
+		check_ajax_referer( 'ldj_grade_nonce', 'nonce' );
+
+		if ( ! current_user_can( 'edit_others_posts' ) ) {
+			wp_send_json_error( array( 'message' => __( 'Permission denied.', 'lesson-journal' ) ) );
+		}
+
+		$entry_id     = absint( $_POST['entry_id'] ?? 0 );
+		$grade_type   = sanitize_text_field( $_POST['grade_type'] ?? '' );
+		$grade_status = sanitize_text_field( $_POST['grade_status'] ?? '' );
+		$grade_score  = isset( $_POST['grade_score'] ) && $_POST['grade_score'] !== '' ? (float) $_POST['grade_score'] : null;
+		$grade_max    = isset( $_POST['grade_max'] ) && $_POST['grade_max'] !== '' ? (float) $_POST['grade_max'] : null;
+
+		if ( ! $entry_id ) {
+			wp_send_json_error( array( 'message' => __( 'Invalid entry.', 'lesson-journal' ) ) );
+		}
+
+		$entry = LDJ_Entry::get_by_id( $entry_id );
+
+		if ( ! $entry ) {
+			wp_send_json_error( array( 'message' => __( 'Entry not found.', 'lesson-journal' ) ) );
+		}
+
+		if ( $grade_type === 'clear' ) {
+			LDJ_Entry::clear_grade( $entry_id );
+			wp_send_json_success( array( 'message' => __( 'Grade cleared.', 'lesson-journal' ) ) );
+		}
+
+		if ( $grade_type === 'pass_fail' ) {
+			if ( ! in_array( $grade_status, array( 'pass', 'fail' ), true ) ) {
+				wp_send_json_error( array( 'message' => __( 'Invalid grade status.', 'lesson-journal' ) ) );
+			}
+			LDJ_Entry::grade( $entry_id, $grade_status );
+		} elseif ( $grade_type === 'score' ) {
+			if ( $grade_score === null || $grade_max === null || $grade_max <= 0 ) {
+				wp_send_json_error( array( 'message' => __( 'Invalid score values.', 'lesson-journal' ) ) );
+			}
+			$status = $grade_score >= ( $grade_max * 0.5 ) ? 'pass' : 'fail';
+			LDJ_Entry::grade( $entry_id, $status, $grade_score, $grade_max );
+		} else {
+			wp_send_json_error( array( 'message' => __( 'Invalid grade type.', 'lesson-journal' ) ) );
+		}
+
+		$updated_entry = LDJ_Entry::get_by_id( $entry_id );
+		do_action( 'ldj_entry_graded', $entry_id, $updated_entry );
+
+		wp_send_json_success( array( 'message' => __( 'Grade saved.', 'lesson-journal' ) ) );
 	}
 
 	public static function delete_entry() {

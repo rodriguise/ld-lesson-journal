@@ -55,14 +55,19 @@ class LDJ_Shortcode {
 		$atts = shortcode_atts( array(
 			'required'     => '0',
 			'heading'      => '',
+			'title'        => '',
 			'instructions' => '',
+			'display'      => 'standard',
 			'per_page'     => '0',
 			'numbers'      => '0',
 		), $atts, 'ldj_group' );
 
-		$required     = filter_var( $atts['required'], FILTER_VALIDATE_BOOLEAN );
-		$per_page     = absint( $atts['per_page'] );
+		$required      = filter_var( $atts['required'], FILTER_VALIDATE_BOOLEAN );
+		$per_page_raw  = absint( $atts['per_page'] );
+		$display       = in_array( $atts['display'], array( 'standard', 'paginated', 'accordion' ), true ) ? $atts['display'] : ( $per_page_raw > 0 ? 'paginated' : 'standard' );
+		$per_page      = $display === 'paginated' ? $per_page_raw : 0;
 		$show_numbers = filter_var( $atts['numbers'], FILTER_VALIDATE_BOOLEAN );
+		$group_title  = sanitize_text_field( $atts['title'] );
 		$lesson_id = get_the_ID();
 		$post_type = get_post_type( $lesson_id );
 
@@ -88,7 +93,10 @@ class LDJ_Shortcode {
 			$group_class .= ' ldj-group--numbered';
 		}
 
-		$output  = '<div class="' . esc_attr( $group_class ) . '" data-lesson-id="' . esc_attr( $lesson_id ) . '" data-required="' . esc_attr( $required ? '1' : '0' ) . '"';
+		$output  = '<div class="' . esc_attr( $group_class ) . '" data-lesson-id="' . esc_attr( $lesson_id ) . '" data-required="' . esc_attr( $required ? '1' : '0' ) . '" data-display="' . esc_attr( $display ) . '"';
+		if ( $group_title ) {
+			$output .= ' data-group-title="' . esc_attr( $group_title ) . '"';
+		}
 		if ( $per_page > 0 ) {
 			$output .= ' data-per-page="' . esc_attr( $per_page ) . '"';
 		}
@@ -165,8 +173,8 @@ class LDJ_Shortcode {
 
 		self::enqueue_assets();
 
-		$output  = '<div class="ldj-prompt-wrap" data-prompt-id="' . esc_attr( $prompt_id ) . '">';
-		$output .= '<div class="ldj-prompt-text">' . wp_kses_post( wpautop( $prompt->post_content ) ) . '</div>';
+		$output  = '<div class="ldj-prompt-wrap" data-prompt-id="' . esc_attr( $prompt_id ) . '" data-prompt-title="' . esc_attr( $prompt->post_title ) . '">';
+		$output .= '<div class="ldj-prompt-text">' . wp_kses_post( wpautop( do_blocks( $prompt->post_content ) ) ) . '</div>';
 
 		if ( $has_entry ) {
 			$output .= '<div class="ldj-completed-entry">';

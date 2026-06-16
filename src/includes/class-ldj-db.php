@@ -6,7 +6,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 
 class LDJ_DB {
 
-	const VERSION = '1.0.0';
+	const VERSION = '1.2.0';
 
 	public static function create_tables() {
 		global $wpdb;
@@ -20,7 +20,13 @@ class LDJ_DB {
 			user_id bigint(20) unsigned NOT NULL,
 			lesson_id bigint(20) unsigned NOT NULL,
 			entry_text longtext NOT NULL,
+			group_title varchar(255) NOT NULL DEFAULT '',
 			created_at datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
+			grade_status varchar(10) DEFAULT NULL,
+			grade_score decimal(5,2) DEFAULT NULL,
+			grade_max decimal(5,2) DEFAULT NULL,
+			graded_by bigint(20) unsigned DEFAULT NULL,
+			graded_at datetime DEFAULT NULL,
 			updated_at datetime NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
 			PRIMARY KEY  (id),
 			UNIQUE KEY prompt_user_lesson (prompt_id, user_id, lesson_id),

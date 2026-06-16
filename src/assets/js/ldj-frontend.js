@@ -7,7 +7,9 @@
 		initEditButtons();
 		initDeleteButtons();
 		initGroupPagination();
+		initAccordions();
 		initJournalViews();
+		initSubmitStates();
 	} );
 
 	function initCharCounters() {
@@ -34,6 +36,28 @@
 		} );
 	}
 
+	function initSubmitStates() {
+		document.querySelectorAll( '.ldj-group' ).forEach( function ( group ) {
+			updateSubmitState( group );
+		} );
+	}
+
+	function updateSubmitState( group ) {
+		var btn = group.querySelector( '.ldj-save-group' );
+		if ( ! btn ) return;
+
+		var anyNeedsSubmit = false;
+
+		group.querySelectorAll( '.ldj-prompt-wrap' ).forEach( function ( wrap ) {
+			var textareaWrap = wrap.querySelector( '.ldj-textarea-wrap' );
+			if ( textareaWrap && textareaWrap.style.display !== 'none' ) {
+				anyNeedsSubmit = true;
+			}
+		} );
+
+		btn.disabled = ! anyNeedsSubmit;
+	}
+
 	function initGroupSaveButtons() {
 		document.querySelectorAll( '.ldj-save-group' ).forEach( function ( btn ) {
 			btn.addEventListener( 'click', function () {
@@ -57,7 +81,10 @@
 
 		if ( group ) {
 			var saveBtn = group.querySelector( '.ldj-save-group' );
-			if ( saveBtn ) saveBtn.textContent = 'Submit';
+			if ( saveBtn ) {
+				saveBtn.textContent = 'Submit';
+				saveBtn.disabled = false;
+			}
 
 			var existing = group.querySelector( '.ldj-cancel-edit' );
 			if ( ! existing ) {
@@ -90,6 +117,8 @@
 
 		if ( saveBtn ) saveBtn.textContent = 'Submit';
 		if ( cancelBtn ) cancelBtn.remove();
+
+		updateSubmitState( group );
 	}
 
 	function initEditButtons() {
@@ -168,6 +197,93 @@
 		showPage( 0 );
 	}
 
+	/* === Accordion === */
+
+	function initAccordions() {
+		document.querySelectorAll( '.ldj-group[data-display="accordion"]' ).forEach( function ( group ) {
+			initSingleAccordion( group );
+		} );
+	}
+
+	function initSingleAccordion( group ) {
+		var prompts = group.querySelectorAll( '.ldj-prompt-wrap' );
+		if ( ! prompts.length ) return;
+
+		group.classList.add( 'ldj-group--accordion' );
+
+		prompts.forEach( function ( wrap, i ) {
+			var descEl = wrap.querySelector( '.ldj-prompt-description' );
+			var label  = descEl ? descEl.textContent : ( wrap.dataset.promptTitle || '' );
+			var hasEntry = !! wrap.querySelector( '.ldj-completed-entry' );
+
+			var item = document.createElement( 'div' );
+			item.className = 'ldj-accordion-item';
+
+			var header = document.createElement( 'button' );
+			header.type      = 'button';
+			header.className = 'ldj-accordion-header';
+
+			var labelSpan = document.createElement( 'span' );
+			labelSpan.textContent = label;
+
+			var rightWrap = document.createElement( 'span' );
+			rightWrap.style.display = 'flex';
+			rightWrap.style.alignItems = 'center';
+
+			var status = document.createElement( 'span' );
+			status.className = 'ldj-accordion-status ' + ( hasEntry ? 'ldj-accordion-status--done' : 'ldj-accordion-status--pending' );
+			status.textContent = hasEntry ? '✓' : '•';
+
+			var chevron = document.createElement( 'span' );
+			chevron.className = 'ldj-accordion-chevron';
+			chevron.textContent = '▼';
+
+			rightWrap.appendChild( status );
+			rightWrap.appendChild( chevron );
+			header.appendChild( labelSpan );
+			header.appendChild( rightWrap );
+
+			var body = document.createElement( 'div' );
+			body.className = 'ldj-accordion-body';
+
+			wrap.style.display = '';
+			item.appendChild( header );
+			body.appendChild( wrap );
+			item.appendChild( body );
+
+			group.insertBefore( item, group.querySelector( '.ldj-group-actions' ) );
+
+			header.addEventListener( 'click', function () {
+				var wasOpen = item.classList.contains( 'ldj-accordion-item--open' );
+				group.querySelectorAll( '.ldj-accordion-item--open' ).forEach( function ( openItem ) {
+					openItem.classList.remove( 'ldj-accordion-item--open' );
+				} );
+				if ( ! wasOpen ) {
+					item.classList.add( 'ldj-accordion-item--open' );
+					requestAnimationFrame( function () {
+						requestAnimationFrame( function () {
+							var rect = item.getBoundingClientRect();
+							if ( rect.top < 0 || rect.top > window.innerHeight * 0.3 ) {
+								item.scrollIntoView( { behavior: 'smooth', block: 'start' } );
+							}
+						} );
+					} );
+				}
+			} );
+		} );
+	}
+
+	function updateAccordionStatus( group ) {
+		group.querySelectorAll( '.ldj-accordion-item' ).forEach( function ( item ) {
+			var wrap     = item.querySelector( '.ldj-prompt-wrap' );
+			var status   = item.querySelector( '.ldj-accordion-status' );
+			if ( ! wrap || ! status ) return;
+			var hasEntry = wrap.querySelector( '.ldj-textarea-wrap' )?.style.display === 'none';
+			status.className = 'ldj-accordion-status ' + ( hasEntry ? 'ldj-accordion-status--done' : 'ldj-accordion-status--pending' );
+			status.textContent = hasEntry ? '✓' : '•';
+		} );
+	}
+
 	/* === Save / Delete === */
 
 	function saveGroup( group, btn ) {
@@ -223,6 +339,11 @@
 		formData.append( 'nonce', ldjData.nonce );
 		formData.append( 'lesson_id', lessonId );
 
+		var groupTitle = group.dataset.groupTitle || '';
+		if ( groupTitle ) {
+			formData.append( 'group_title', groupTitle );
+		}
+
 		entries.forEach( function ( entry, i ) {
 			formData.append( 'entries[' + i + '][prompt_id]', entry.prompt_id );
 			formData.append( 'entries[' + i + '][entry_text]', entry.entry_text );
@@ -250,8 +371,8 @@
 				showFeedback( feedback, ldjData.i18n.error, 'error' );
 			} )
 			.finally( function () {
-				btn.disabled    = false;
 				btn.textContent = 'Submit';
+				updateSubmitState( group );
 
 				var cancelBtn = group.querySelector( '.ldj-cancel-edit' );
 				if ( cancelBtn ) cancelBtn.remove();
@@ -294,6 +415,8 @@
 						updateMarkComplete( required, false );
 					}
 
+					updateSubmitState( group );
+					updateAccordionStatus( group );
 					document.dispatchEvent( new CustomEvent( 'ldj:entries-changed' ) );
 				}
 			} )
@@ -342,6 +465,8 @@
 		} );
 
 		exitEditMode( group );
+		updateSubmitState( group );
+		updateAccordionStatus( group );
 	}
 
 	var savedTooltipHtml = '';
@@ -601,6 +726,10 @@
 		clone.querySelector( '.ldj-journal-toolbar' )?.remove();
 		clone.querySelector( '.ldj-journal-header' )?.remove();
 
+		clone.querySelectorAll( '.ldj-screen-only' ).forEach( function ( el ) {
+			el.remove();
+		} );
+
 		var printHeader = clone.querySelector( '.ldj-journal-print-header' );
 		if ( printHeader ) printHeader.style.display = 'flex';
 
@@ -611,11 +740,12 @@
 			e.style.display = '';
 		} );
 
-		clone.style.maxWidth  = 'none';
-		clone.style.width     = '100%';
-		clone.style.margin    = '0';
-		clone.style.padding   = '0';
+		clone.style.maxWidth   = 'none';
+		clone.style.width      = '100%';
+		clone.style.margin     = '0';
+		clone.style.padding    = '0';
 		clone.style.fontFamily = 'system-ui, -apple-system, sans-serif';
+		clone.style.fontSize   = '11pt';
 
 		var filename = wrap.dataset.pdfFilename || 'journal';
 

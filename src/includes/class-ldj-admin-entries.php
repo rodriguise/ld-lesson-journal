@@ -37,7 +37,7 @@ class LDJ_Admin_Entries {
 
 	public static function highlight_submenu( $submenu_file, $parent_file ) {
 		$screen = get_current_screen();
-		if ( $screen && $screen->id === 'learndash-lms_page_ldj-entries' ) {
+		if ( $screen && in_array( $screen->id, array( 'learndash-lms_page_ldj-entries', 'learndash-lms_page_ldj-grade', 'learndash-lms_page_ldj-gradebook-settings' ), true ) ) {
 			return 'edit.php?post_type=ldj_prompt';
 		}
 		return $submenu_file;
@@ -85,7 +85,7 @@ class LDJ_Admin_Entries {
 		echo '</div>';
 	}
 
-	private static function output_tabs( $active ) {
+	public static function output_tabs( $active ) {
 		$tabs = array(
 			'prompts' => array(
 				'label' => __( 'Prompts', 'lesson-journal' ),
@@ -95,7 +95,18 @@ class LDJ_Admin_Entries {
 				'label' => __( 'Entries', 'lesson-journal' ),
 				'url'   => admin_url( 'admin.php?page=ldj-entries' ),
 			),
+			'grading' => array(
+				'label' => __( 'Grading', 'lesson-journal' ),
+				'url'   => admin_url( 'admin.php?page=ldj-grade' ),
+			),
 		);
+
+		if ( class_exists( 'LearnDash_Gradebook' ) ) {
+			$tabs['gradebook'] = array(
+				'label' => __( 'Gradebook Settings', 'lesson-journal' ),
+				'url'   => admin_url( 'admin.php?page=ldj-gradebook-settings' ),
+			);
+		}
 
 		echo '<nav class="nav-tab-wrapper ldj-nav-tabs">';
 		foreach ( $tabs as $key => $tab ) {
@@ -301,7 +312,18 @@ class LDJ_Entries_List_Table extends WP_List_Table {
 
 	protected function column_student( $item ) {
 		$user = get_userdata( $item->user_id );
-		return $user ? esc_html( $user->display_name ) : '#' . $item->user_id;
+		$name = $user ? esc_html( $user->display_name ) : '#' . $item->user_id;
+
+		$grade_url = LDJ_Admin_Grade::get_grade_url( $item->user_id, $item->lesson_id );
+		$actions   = array(
+			'grade' => sprintf(
+				'<a href="%s" class="ldj-action-grade">%s</a>',
+				esc_url( $grade_url ),
+				esc_html__( 'Grade Journal', 'lesson-journal' )
+			),
+		);
+
+		return $name . $this->row_actions( $actions );
 	}
 
 	protected function column_prompt( $item ) {

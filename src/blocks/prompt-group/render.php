@@ -5,9 +5,12 @@ if ( ! defined( 'ABSPATH' ) ) {
 }
 
 $required          = ! empty( $attributes['required'] );
-$per_page          = absint( $attributes['perPage'] ?? 0 );
+$per_page_raw      = absint( $attributes['perPage'] ?? 0 );
+$display           = $attributes['display'] ?? ( $per_page_raw > 0 ? 'paginated' : 'standard' );
+$per_page          = $display === 'paginated' ? $per_page_raw : 0;
 $show_view_journal = $attributes['showViewJournal'] ?? true;
 $show_numbers      = ! empty( $attributes['showNumbers'] );
+$group_title       = $attributes['title'] ?? '';
 $lesson_id = get_the_ID();
 $post_type = get_post_type( $lesson_id );
 $user_id   = get_current_user_id();
@@ -52,6 +55,8 @@ if ( $show_numbers ) {
 <div <?php echo get_block_wrapper_attributes( array( 'class' => $group_classes ) ); ?>
 	data-lesson-id="<?php echo esc_attr( $lesson_id ); ?>"
 	data-required="<?php echo esc_attr( $required ? '1' : '0' ); ?>"
+	data-display="<?php echo esc_attr( $display ); ?>"
+	<?php if ( $group_title ) : ?>data-group-title="<?php echo esc_attr( $group_title ); ?>"<?php endif; ?>
 	<?php if ( $per_page > 0 ) : ?>data-per-page="<?php echo esc_attr( $per_page ); ?>"<?php endif; ?>>
 
 	<?php if ( ! empty( $attributes['heading'] ) ) : ?>

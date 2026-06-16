@@ -39,10 +39,11 @@ $has_entry  = ! empty( $entry_text );
 
 ?>
 <div <?php echo get_block_wrapper_attributes( array( 'class' => 'ldj-prompt-wrap' ) ); ?>
-	data-prompt-id="<?php echo esc_attr( $prompt_id ); ?>">
+	data-prompt-id="<?php echo esc_attr( $prompt_id ); ?>"
+	data-prompt-title="<?php echo esc_attr( $prompt->post_title ); ?>">
 
 	<div class="ldj-prompt-text">
-		<?php echo wp_kses_post( wpautop( $prompt->post_content ) ); ?>
+		<?php echo wp_kses_post( wpautop( do_blocks( $prompt->post_content ) ) ); ?>
 	</div>
 
 	<?php if ( $has_entry ) : ?>

@@ -3,7 +3,8 @@
     "phpVersion": "8.3",
     "testsEnvironment": false,
     "plugins": [
-        "./wp-content/plugins/sfwd-lms"
+        "./wp-content/plugins/sfwd-lms",
+        "./wp-content/plugins/learndash-gradebook"
     ],
     "mappings": {
         "wp-content/plugins/lesson-journal": "./src"

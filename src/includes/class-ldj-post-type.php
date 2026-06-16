@@ -88,6 +88,10 @@ class LDJ_Post_Type {
 				'type'    => 'boolean',
 				'default' => false,
 			),
+			'_ldj_graded'      => array(
+				'type'    => 'boolean',
+				'default' => false,
+			),
 			'_ldj_min_chars'   => array(
 				'type'    => 'integer',
 				'default' => 0,
@@ -136,11 +140,12 @@ class LDJ_Post_Type {
 		$description = get_post_meta( $post->ID, '_ldj_description', true );
 		$rows        = (int) get_post_meta( $post->ID, '_ldj_rows', true ) ?: 5;
 		$placeholder = get_post_meta( $post->ID, '_ldj_placeholder', true );
+		$graded      = (bool) get_post_meta( $post->ID, '_ldj_graded', true );
 		$required    = (bool) get_post_meta( $post->ID, '_ldj_required', true );
 		$min_chars   = (int) get_post_meta( $post->ID, '_ldj_min_chars', true );
 		$max_chars   = (int) get_post_meta( $post->ID, '_ldj_max_chars', true );
 
-		if ( $required && $min_chars < 1 ) {
+		if ( ( $required || $graded ) && $min_chars < 1 ) {
 			$min_chars = 1;
 		}
 		?>
@@ -158,12 +163,22 @@ class LDJ_Post_Type {
 			<input type="text" id="ldj-placeholder" name="_ldj_placeholder" value="<?php echo esc_attr( $placeholder ); ?>" class="widefat">
 		</p>
 		<p>
+			<label for="ldj-graded">
+				<input type="checkbox" id="ldj-graded" name="_ldj_graded" value="1" <?php checked( $graded ); ?>>
+				<?php esc_html_e( 'Graded', 'lesson-journal' ); ?>
+			</label>
+			<span class="description"><?php esc_html_e( 'Graded prompts are always required and appear in the gradebook.', 'lesson-journal' ); ?></span>
+		</p>
+		<p>
 			<label for="ldj-required">
-				<input type="checkbox" id="ldj-required" name="_ldj_required" value="1" <?php checked( $required ); ?>>
+				<input type="checkbox" id="ldj-required" name="_ldj_required" value="1" <?php checked( $required || $graded ); ?> <?php echo $graded ? 'disabled' : ''; ?>>
 				<?php esc_html_e( 'Required', 'lesson-journal' ); ?>
 			</label>
+			<?php if ( $graded ) : ?>
+				<input type="hidden" name="_ldj_required" value="1">
+			<?php endif; ?>
 		</p>
-		<p id="ldj-min-chars-row" style="<?php echo $required ? '' : 'display:none'; ?>">
+		<p id="ldj-min-chars-row" style="<?php echo ( $required || $graded ) ? '' : 'display:none'; ?>">
 			<label for="ldj-min-chars"><?php esc_html_e( 'Min characters', 'lesson-journal' ); ?></label><br>
 			<input type="number" id="ldj-min-chars" name="_ldj_min_chars" value="<?php echo esc_attr( $min_chars ); ?>" min="1" class="small-text">
 		</p>
@@ -174,18 +189,45 @@ class LDJ_Post_Type {
 		</p>
 		<script>
 		(function(){
-			var cb = document.getElementById('ldj-required');
+			var gradedCb = document.getElementById('ldj-graded');
+			var requiredCb = document.getElementById('ldj-required');
 			var row = document.getElementById('ldj-min-chars-row');
 			var input = document.getElementById('ldj-min-chars');
-			cb.addEventListener('change', function(){
-				if (cb.checked) {
+
+			function syncRequired() {
+				if (gradedCb.checked) {
+					requiredCb.checked = true;
+					requiredCb.disabled = true;
+					if (!requiredCb.nextElementSibling || requiredCb.nextElementSibling.name !== '_ldj_required') {
+						var hidden = document.createElement('input');
+						hidden.type = 'hidden';
+						hidden.name = '_ldj_required';
+						hidden.value = '1';
+						hidden.id = 'ldj-required-hidden';
+						requiredCb.parentNode.appendChild(hidden);
+					}
+				} else {
+					requiredCb.disabled = false;
+					var hidden = document.getElementById('ldj-required-hidden');
+					if (hidden) hidden.remove();
+				}
+			}
+
+			function syncMinChars() {
+				if (requiredCb.checked || gradedCb.checked) {
 					row.style.display = '';
 					if (parseInt(input.value,10) < 1) input.value = '1';
 				} else {
 					row.style.display = 'none';
 					input.value = '0';
 				}
+			}
+
+			gradedCb.addEventListener('change', function(){
+				syncRequired();
+				syncMinChars();
 			});
+			requiredCb.addEventListener('change', syncMinChars);
 		})();
 		</script>
 		<?php
@@ -208,7 +250,9 @@ class LDJ_Post_Type {
 			return;
 		}
 
-		$required = ! empty( $_POST['_ldj_required'] );
+		$graded   = ! empty( $_POST['_ldj_graded'] );
+		$required = $graded || ! empty( $_POST['_ldj_required'] );
+		update_post_meta( $post_id, '_ldj_graded', $graded );
 		update_post_meta( $post_id, '_ldj_required', $required );
 
 		$min_chars = absint( $_POST['_ldj_min_chars'] ?? 0 );

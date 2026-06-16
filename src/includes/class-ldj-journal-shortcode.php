@@ -83,6 +83,16 @@ class LDJ_Journal_Shortcode {
 		wp_localize_script( 'ldj-frontend', 'ldjData', array(
 			'ajaxUrl' => admin_url( 'admin-ajax.php' ),
 			'nonce'   => wp_create_nonce( 'ldj_entry_nonce' ),
+			'i18n'    => array(
+				'saving'         => __( 'Saving…', 'lesson-journal' ),
+				'saved'          => __( 'Journal entries saved.', 'lesson-journal' ),
+				'deleted'        => __( 'Entry deleted.', 'lesson-journal' ),
+				'error'          => __( 'An error occurred. Please try again.', 'lesson-journal' ),
+				'confirm'        => __( 'Are you sure you want to delete this entry?', 'lesson-journal' ),
+				'required'       => __( 'Please complete all required entries.', 'lesson-journal' ),
+				'promptRequired' => __( 'This prompt requires a response.', 'lesson-journal' ),
+				'promptMinChars' => __( 'This prompt requires at least %d characters.', 'lesson-journal' ),
+			),
 		) );
 
 		wp_enqueue_style( 'dashicons' );
@@ -251,30 +261,54 @@ class LDJ_Journal_Shortcode {
 			$output .= '<div class="ldj-journal-section"' . $content_style . '>';
 			$output .= '<h3 class="ldj-journal-lesson-title">' . esc_html( $section_title ) . '</h3>';
 
+			$sub_grouped    = array();
+			$sub_group_order = array();
 			foreach ( $lesson_entries as $entry ) {
-				$prompt = get_post( $entry->prompt_id );
+				$gt = isset( $entry->group_title ) ? $entry->group_title : '';
+				if ( ! isset( $sub_grouped[ $gt ] ) ) {
+					$sub_grouped[ $gt ]  = array();
+					$sub_group_order[]   = $gt;
+				}
+				$sub_grouped[ $gt ][] = $entry;
+			}
 
-				if ( ! $prompt ) {
-					continue;
+			foreach ( $sub_group_order as $gt ) {
+				if ( $gt !== '' ) {
+					$output .= '<h4 class="ldj-journal-group-title">' . esc_html( $gt ) . '</h4>';
 				}
 
-				$output .= '<div class="ldj-journal-entry" data-entry-index="' . esc_attr( $entry_index ) . '">';
-				$output .= '<div class="ldj-journal-question">' . wp_kses_post( wpautop( $prompt->post_content ) ) . '</div>';
-				$output .= '<div class="ldj-journal-answer">' . wp_kses_post( nl2br( esc_html( $entry->entry_text ) ) ) . '</div>';
-				$output .= '<div class="ldj-journal-meta">';
-				$output .= '<span class="ldj-journal-date">'
-					. esc_html( date_i18n( $datetime_fmt, strtotime( $entry->updated_at ) ) )
-					. '</span>';
-				if ( $entry->created_at !== $entry->updated_at ) {
-					$output .= ' <span class="ldj-journal-edited">'
-						. esc_html__( '(edited)', 'lesson-journal' )
+				foreach ( $sub_grouped[ $gt ] as $entry ) {
+					$prompt = get_post( $entry->prompt_id );
+
+					if ( ! $prompt ) {
+						continue;
+					}
+
+					$rendered_question = do_blocks( $prompt->post_content );
+					$rendered_question = preg_replace(
+						'#<div[^>]*class="[^"]*ldj-screen-only[^"]*"[^>]*>.*?</div>#s',
+						'',
+						$rendered_question
+					);
+
+					$output .= '<div class="ldj-journal-entry" data-entry-index="' . esc_attr( $entry_index ) . '">';
+					$output .= '<div class="ldj-journal-question">' . wp_kses_post( wpautop( $rendered_question ) ) . '</div>';
+					$output .= '<div class="ldj-journal-answer">' . wp_kses_post( nl2br( esc_html( $entry->entry_text ) ) ) . '</div>';
+					$output .= '<div class="ldj-journal-meta">';
+					$output .= '<span class="ldj-journal-date">'
+						. esc_html( date_i18n( $datetime_fmt, strtotime( $entry->updated_at ) ) )
 						. '</span>';
-				}
-				$output .= ' <span class="ldj-journal-topic">| <a href="' . esc_url( get_permalink( $group_lesson_id ) ) . '" target="_blank" rel="noopener">' . esc_html( $section_title ) . '</a></span>';
-				$output .= '</div>';
-				$output .= '</div>';
+					if ( $entry->created_at !== $entry->updated_at ) {
+						$output .= ' <span class="ldj-journal-edited">'
+							. esc_html__( '(edited)', 'lesson-journal' )
+							. '</span>';
+					}
+					$output .= ' <span class="ldj-journal-topic">| <a href="' . esc_url( get_permalink( $group_lesson_id ) ) . '" target="_blank" rel="noopener">' . esc_html( $section_title ) . '</a></span>';
+					$output .= '</div>';
+					$output .= '</div>';
 
-				$entry_index++;
+					$entry_index++;
+				}
 			}
 
 			$output .= '</div>';

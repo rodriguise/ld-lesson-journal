@@ -1,0 +1,17 @@
+{
+	"$schema": "https://schemas.wp.org/trunk/block.json",
+	"apiVersion": 3,
+	"name": "ldj/screen-only",
+	"version": "0.1.0",
+	"title": "Screen Only (Exclude from Print)",
+	"category": "learndash-blocks",
+	"icon": "hidden",
+	"description": "Content inside this block is visible on screen but excluded from journal printouts and PDF downloads.",
+	"textdomain": "lesson-journal",
+	"supports": {
+		"html": false,
+		"align": false
+	},
+	"editorScript": "file:../../build/screen-only/index.js",
+	"render": "file:./render.php"
+}
