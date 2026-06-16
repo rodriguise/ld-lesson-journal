@@ -290,6 +290,69 @@ class LDJ_Entry {
 		);
 	}
 
+	public static function calculate_grade_status( float $score, float $max ): string {
+		if ( $max <= 0 ) {
+			return 'insufficient';
+		}
+
+		$percentage   = (int) ceil( ( $score / $max ) * 100 );
+		$outstanding  = (int) get_option( 'ldj_outstanding_threshold', 90 );
+		$satisfactory = (int) get_option( 'ldj_satisfactory_threshold', 80 );
+
+		if ( $percentage >= $outstanding ) {
+			return 'outstanding';
+		}
+
+		if ( $percentage >= $satisfactory ) {
+			return 'satisfactory';
+		}
+
+		return 'insufficient';
+	}
+
+	public static function is_locked_grade( ?string $status ): bool {
+		return $status !== null && $status !== '';
+	}
+
+	public static function is_passing_grade( ?string $status ): bool {
+		return in_array( $status, array( 'outstanding', 'satisfactory', 'pass' ), true );
+	}
+
+	public static function reopen( int $entry_id ): bool {
+		global $wpdb;
+
+		$result = $wpdb->update(
+			LDJ_DB::table_name(),
+			array( 'reopened' => 1 ),
+			array( 'id' => $entry_id ),
+			array( '%d' ),
+			array( '%d' )
+		);
+
+		return $result !== false;
+	}
+
+	public static function close_reopen( int $entry_id ): bool {
+		global $wpdb;
+
+		$result = $wpdb->update(
+			LDJ_DB::table_name(),
+			array(
+				'reopened'     => 0,
+				'grade_status' => null,
+				'grade_score'  => null,
+				'grade_max'    => null,
+				'graded_by'    => null,
+				'graded_at'    => null,
+			),
+			array( 'id' => $entry_id ),
+			array( '%d', null, null, null, null, null ),
+			array( '%d' )
+		);
+
+		return $result !== false;
+	}
+
 	public static function grade( int $entry_id, string $grade_status, ?float $grade_score = null, ?float $grade_max = null ): bool {
 		global $wpdb;
 
@@ -383,18 +446,21 @@ class LDJ_Entry {
 			return (bool) get_post_meta( $entry->prompt_id, '_ldj_graded', true );
 		} );
 
-		$total   = count( $entries );
-		$passed  = 0;
-		$failed  = 0;
-		$scored  = 0;
-		$sum     = 0.0;
-		$max_sum = 0.0;
+		$total        = count( $entries );
+		$outstanding  = 0;
+		$satisfactory = 0;
+		$insufficient = 0;
+		$scored       = 0;
+		$sum          = 0.0;
+		$max_sum      = 0.0;
 
 		foreach ( $entries as $entry ) {
-			if ( $entry->grade_status === 'pass' ) {
-				$passed++;
-			} elseif ( $entry->grade_status === 'fail' ) {
-				$failed++;
+			if ( in_array( $entry->grade_status, array( 'outstanding' ), true ) ) {
+				$outstanding++;
+			} elseif ( in_array( $entry->grade_status, array( 'satisfactory', 'pass' ), true ) ) {
+				$satisfactory++;
+			} elseif ( in_array( $entry->grade_status, array( 'insufficient', 'redo', 'fail' ), true ) ) {
+				$insufficient++;
 			}
 
 			if ( $entry->grade_score !== null && $entry->grade_max !== null && (float) $entry->grade_max > 0 ) {
@@ -405,14 +471,29 @@ class LDJ_Entry {
 		}
 
 		return array(
-			'total'      => $total,
-			'passed'     => $passed,
-			'failed'     => $failed,
-			'scored'     => $scored,
-			'sum'        => $sum,
-			'max_sum'    => $max_sum,
-			'percentage' => $max_sum > 0 ? round( ( $sum / $max_sum ) * 100, 1 ) : null,
+			'total'        => $total,
+			'outstanding'  => $outstanding,
+			'satisfactory' => $satisfactory,
+			'insufficient' => $insufficient,
+			'scored'       => $scored,
+			'sum'          => $sum,
+			'max_sum'      => $max_sum,
+			'percentage'   => $max_sum > 0 ? round( ( $sum / $max_sum ) * 100, 1 ) : null,
 		);
+	}
+
+	public static function save_comment( int $entry_id, string $comment ): bool {
+		global $wpdb;
+
+		$result = $wpdb->update(
+			LDJ_DB::table_name(),
+			array( 'instructor_comment' => $comment === '' ? null : $comment ),
+			array( 'id' => $entry_id ),
+			array( $comment === '' ? null : '%s' ),
+			array( '%d' )
+		);
+
+		return $result !== false;
 	}
 
 	public static function bulk_delete( array $ids ): int {

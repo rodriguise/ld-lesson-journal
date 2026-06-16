@@ -1,0 +1,39 @@
+{
+	"$schema": "https://schemas.wp.org/trunk/block.json",
+	"apiVersion": 3,
+	"name": "ldj/journal-browse",
+	"version": "0.1.0",
+	"title": "Journal Browser",
+	"category": "learndash-blocks",
+	"icon": "book-alt",
+	"description": "Displays the student journal with course and lesson filter dropdowns. Ideal for student profile pages.",
+	"textdomain": "lesson-journal",
+	"attributes": {
+		"showCourseFilter": {
+			"type": "boolean",
+			"default": true
+		},
+		"showLessonFilter": {
+			"type": "boolean",
+			"default": true
+		},
+		"showPrint": {
+			"type": "boolean",
+			"default": true
+		},
+		"showSave": {
+			"type": "boolean",
+			"default": true
+		},
+		"buttonStyle": {
+			"type": "string",
+			"default": "icons"
+		}
+	},
+	"supports": {
+		"align": [ "wide", "full" ],
+		"html": false
+	},
+	"editorScript": "file:../../build/journal-browse/index.js",
+	"render": "file:./render.php"
+}

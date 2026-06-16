@@ -9,6 +9,7 @@
 		initGroupPagination();
 		initAccordions();
 		initJournalViews();
+		initJournalEntryActions();
 		initSubmitStates();
 	} );
 
@@ -288,7 +289,6 @@
 
 	function saveGroup( group, btn ) {
 		var lessonId = group.dataset.lessonId;
-		var required = group.dataset.required === '1';
 		var prompts  = group.querySelectorAll( '.ldj-prompt-wrap' );
 		var feedback = group.querySelector( '.ldj-feedback' );
 		var entries  = [];
@@ -314,17 +314,6 @@
 				entry_text: text,
 			} );
 		} );
-
-		if ( required ) {
-			var empty = entries.some( function ( e ) {
-				return ! e.entry_text.trim();
-			} );
-
-			if ( empty ) {
-				showFeedback( feedback, ldjData.i18n.required, 'error' );
-				return;
-			}
-		}
 
 		if ( errors.length > 0 ) {
 			showFeedback( feedback, errors[0], 'error' );
@@ -522,6 +511,97 @@
 
 	/* === Journal View: refresh, pagination, print, PDF === */
 
+	function initJournalEntryActions() {
+		document.querySelectorAll( '.ldj-journal-edit-btn' ).forEach( function ( btn ) {
+			btn.addEventListener( 'click', function () {
+				var entry = btn.closest( '.ldj-journal-entry' );
+				if ( ! entry ) return;
+				var answer  = entry.querySelector( '.ldj-journal-answer' );
+				var actions = entry.querySelector( '.ldj-journal-entry-actions' );
+				var form    = entry.querySelector( '.ldj-journal-edit-form' );
+				if ( answer ) answer.style.display = 'none';
+				if ( actions ) actions.style.display = 'none';
+				if ( form ) form.style.display = '';
+			} );
+		} );
+
+		document.querySelectorAll( '.ldj-journal-edit-cancel' ).forEach( function ( btn ) {
+			btn.addEventListener( 'click', function () {
+				var entry = btn.closest( '.ldj-journal-entry' );
+				if ( ! entry ) return;
+				var answer  = entry.querySelector( '.ldj-journal-answer' );
+				var actions = entry.querySelector( '.ldj-journal-entry-actions' );
+				var form    = entry.querySelector( '.ldj-journal-edit-form' );
+				if ( answer ) answer.style.display = '';
+				if ( actions ) actions.style.display = '';
+				if ( form ) form.style.display = 'none';
+			} );
+		} );
+
+		document.querySelectorAll( '.ldj-journal-edit-save' ).forEach( function ( btn ) {
+			btn.addEventListener( 'click', function () {
+				var entry    = btn.closest( '.ldj-journal-entry' );
+				var textarea = entry.querySelector( '.ldj-journal-edit-textarea' );
+				if ( ! entry || ! textarea ) return;
+
+				var formData = new FormData();
+				formData.append( 'action', 'ldj_update_entry' );
+				formData.append( 'nonce', ldjData.nonce );
+				formData.append( 'prompt_id', entry.dataset.promptId );
+				formData.append( 'lesson_id', entry.dataset.lessonId );
+				formData.append( 'entry_text', textarea.value );
+
+				btn.disabled = true;
+				btn.textContent = ldjData.i18n.saving;
+
+				fetch( ldjData.ajaxUrl, { method: 'POST', credentials: 'same-origin', body: formData } )
+					.then( function ( r ) { return r.json(); } )
+					.then( function ( data ) {
+						if ( data.success ) {
+							var answer = entry.querySelector( '.ldj-journal-answer' );
+							if ( answer ) {
+								answer.innerHTML = textarea.value
+									.replace( /&/g, '&amp;' ).replace( /</g, '&lt;' ).replace( />/g, '&gt;' ).replace( /\n/g, '<br>' );
+							}
+							var actions = entry.querySelector( '.ldj-journal-entry-actions' );
+							var form    = entry.querySelector( '.ldj-journal-edit-form' );
+							if ( answer ) answer.style.display = '';
+							if ( actions ) actions.style.display = '';
+							if ( form ) form.style.display = 'none';
+						}
+					} )
+					.finally( function () {
+						btn.disabled = false;
+						btn.textContent = ldjData.i18n.saved ? 'Save' : 'Save';
+					} );
+			} );
+		} );
+
+		document.querySelectorAll( '.ldj-journal-delete-btn' ).forEach( function ( btn ) {
+			btn.addEventListener( 'click', function () {
+				if ( ! confirm( ldjData.i18n.confirm ) ) return;
+
+				var entry = btn.closest( '.ldj-journal-entry' );
+				if ( ! entry ) return;
+
+				var formData = new FormData();
+				formData.append( 'action', 'ldj_delete_entry' );
+				formData.append( 'nonce', ldjData.nonce );
+				formData.append( 'prompt_id', entry.dataset.promptId );
+				formData.append( 'lesson_id', entry.dataset.lessonId );
+
+				fetch( ldjData.ajaxUrl, { method: 'POST', credentials: 'same-origin', body: formData } )
+					.then( function ( r ) { return r.json(); } )
+					.then( function ( data ) {
+						if ( data.success ) {
+							entry.remove();
+							document.dispatchEvent( new CustomEvent( 'ldj:entries-changed' ) );
+						}
+					} );
+			} );
+		} );
+	}
+
 	function initJournalViews() {
 		document.querySelectorAll( '.ldj-journal-wrap' ).forEach( function ( wrap ) {
 			initSingleJournalView( wrap );
@@ -595,6 +675,7 @@
 		initJournalPagination( wrap );
 		initJournalButtons( wrap );
 		initJournalFilter( wrap );
+		initJournalEntryActions();
 	}
 
 	function initJournalFilter( wrap ) {
@@ -616,11 +697,51 @@
 		var pageInfo = wrap.querySelector( '.ldj-journal-page-info' );
 		var paginationWrap = wrap.querySelector( '.ldj-journal-pagination' );
 
-		if ( ! sections.length || ! prevBtn || ! nextBtn ) return;
+		if ( ! prevBtn || ! nextBtn ) return;
+
+		if ( ! sections.length ) {
+			prevBtn.disabled = true;
+			nextBtn.disabled = true;
+			if ( pageInfo ) pageInfo.textContent = '';
+			if ( paginationWrap ) paginationWrap.style.display = 'none';
+			return;
+		}
 
 		var lessonId = wrap.dataset.lessonId || '0';
+		var pages = [];
 
-		if ( lessonId !== '0' || sections.length <= 1 ) {
+		if ( lessonId === '0' ) {
+			var lessonGroups = {};
+			var lessonOrder  = [];
+			sections.forEach( function ( s ) {
+				var parentId = s.dataset.parentLessonId || s.dataset.stepId || '0';
+				if ( ! lessonGroups[ parentId ] ) {
+					lessonGroups[ parentId ] = [];
+					lessonOrder.push( parentId );
+				}
+				lessonGroups[ parentId ].push( s );
+			} );
+			lessonOrder.forEach( function ( id ) {
+				pages.push( lessonGroups[ id ] );
+			} );
+		} else {
+			var lessonSections = [];
+			var topicSections  = [];
+			sections.forEach( function ( s ) {
+				var stepId   = s.dataset.stepId || '0';
+				var parentId = s.dataset.parentLessonId || '0';
+				if ( stepId === parentId ) {
+					lessonSections.push( s );
+				} else {
+					topicSections.push( s );
+				}
+			} );
+			lessonSections.concat( topicSections ).forEach( function ( s ) {
+				pages.push( [ s ] );
+			} );
+		}
+
+		if ( pages.length <= 1 ) {
 			sections.forEach( function ( s ) {
 				s.style.display = '';
 				s.querySelectorAll( '.ldj-journal-entry' ).forEach( function ( e ) {
@@ -633,20 +754,21 @@
 
 		if ( paginationWrap ) paginationWrap.style.display = '';
 
-		var total   = sections.length;
+		var total   = pages.length;
 		var current = 0;
 
-		function showSection( index ) {
+		function showPage( index ) {
 			current = index;
 
-			sections.forEach( function ( section ) {
-				section.style.display = 'none';
+			sections.forEach( function ( s ) {
+				s.style.display = 'none';
 			} );
 
-			var active = sections[ current ];
-			active.style.display = '';
-			active.querySelectorAll( '.ldj-journal-entry' ).forEach( function ( e ) {
-				e.style.display = '';
+			pages[ current ].forEach( function ( s ) {
+				s.style.display = '';
+				s.querySelectorAll( '.ldj-journal-entry' ).forEach( function ( e ) {
+					e.style.display = '';
+				} );
 			} );
 
 			prevBtn.disabled = current === 0;
@@ -655,14 +777,14 @@
 		}
 
 		prevBtn.addEventListener( 'click', function () {
-			if ( current > 0 ) showSection( current - 1 );
+			if ( current > 0 ) showPage( current - 1 );
 		} );
 
 		nextBtn.addEventListener( 'click', function () {
-			if ( current < total - 1 ) showSection( current + 1 );
+			if ( current < total - 1 ) showPage( current + 1 );
 		} );
 
-		showSection( 0 );
+		showPage( 0 );
 	}
 
 	function initJournalButtons( wrap ) {
@@ -695,10 +817,15 @@
 			originalNext   = wrap.nextSibling;
 			document.body.appendChild( wrap );
 			document.body.classList.add( 'ldj-printing' );
+			var cb = wrap.querySelector( '.ldj-include-private-cb' );
+			if ( ! cb || ! cb.checked ) {
+				document.body.classList.add( 'ldj-hide-private' );
+			}
 		} );
 
 		window.addEventListener( 'afterprint', function () {
 			document.body.classList.remove( 'ldj-printing' );
+			document.body.classList.remove( 'ldj-hide-private' );
 			if ( originalParent ) {
 				if ( originalNext ) {
 					originalParent.insertBefore( wrap, originalNext );
@@ -729,6 +856,13 @@
 		clone.querySelectorAll( '.ldj-screen-only' ).forEach( function ( el ) {
 			el.remove();
 		} );
+
+		var cb = wrap.querySelector( '.ldj-include-private-cb' );
+		if ( ! cb || ! cb.checked ) {
+			clone.querySelectorAll( '.ldj-journal-entry--private' ).forEach( function ( el ) {
+				el.remove();
+			} );
+		}
 
 		var printHeader = clone.querySelector( '.ldj-journal-print-header' );
 		if ( printHeader ) printHeader.style.display = 'flex';

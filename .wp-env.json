@@ -4,7 +4,8 @@
     "testsEnvironment": false,
     "plugins": [
         "./wp-content/plugins/sfwd-lms",
-        "./wp-content/plugins/learndash-gradebook"
+        "./wp-content/plugins/learndash-gradebook",
+        "./wp-content/plugins/instructor-role"
     ],
     "mappings": {
         "wp-content/plugins/lesson-journal": "./src"

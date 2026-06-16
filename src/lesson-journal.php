@@ -3,7 +3,7 @@
  * Plugin Name:       Lesson Journal
  * Plugin URI:        https://github.com/rodriguise/ld-lesson-journal
  * Description:       A journaling companion for LearnDash lessons.
- * Version:           0.1.0
+ * Version:           0.3.0
  * Requires at least: 6.5
  * Requires PHP:      8.1
  * Author:            Rob Rodriguez
@@ -17,7 +17,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
 
-define( 'LESSON_JOURNAL_VERSION', '0.1.0' );
+define( 'LESSON_JOURNAL_VERSION', '0.3.0' );
 define( 'LESSON_JOURNAL_FILE', __FILE__ );
 define( 'LESSON_JOURNAL_PATH', plugin_dir_path( __FILE__ ) );
 define( 'LESSON_JOURNAL_URL', plugin_dir_url( __FILE__ ) );
@@ -32,7 +32,9 @@ require_once LESSON_JOURNAL_PATH . 'includes/class-ldj-completion.php';
 require_once LESSON_JOURNAL_PATH . 'includes/class-ldj-admin-entries.php';
 require_once LESSON_JOURNAL_PATH . 'includes/class-ldj-admin-grade.php';
 require_once LESSON_JOURNAL_PATH . 'includes/class-ldj-gradebook.php';
+require_once LESSON_JOURNAL_PATH . 'includes/class-ldj-grader-shortcode.php';
 require_once LESSON_JOURNAL_PATH . 'includes/class-ldj-journal-page.php';
+require_once LESSON_JOURNAL_PATH . 'includes/class-ldj-journal-browse.php';
 
 function lesson_journal_learndash_active() {
 	return defined( 'LEARNDASH_VERSION' );
@@ -52,9 +54,11 @@ function lesson_journal_init() {
 	LDJ_Post_Type::register();
 	LDJ_Shortcode::register();
 	LDJ_Journal_Shortcode::register();
+	LDJ_Grader_Shortcode::register();
 	LDJ_Ajax::register();
 	LDJ_Completion::register();
 	LDJ_Journal_Page::register();
+	LDJ_Journal_Browse::register();
 
 	LDJ_Gradebook::register();
 
@@ -104,6 +108,8 @@ function lesson_journal_register_blocks() {
 	register_block_type( LESSON_JOURNAL_PATH . 'blocks/prompt' );
 	register_block_type( LESSON_JOURNAL_PATH . 'blocks/journal-view' );
 	register_block_type( LESSON_JOURNAL_PATH . 'blocks/screen-only' );
+	register_block_type( LESSON_JOURNAL_PATH . 'blocks/grader' );
+	register_block_type( LESSON_JOURNAL_PATH . 'blocks/journal-browse' );
 }
 add_action( 'init', 'lesson_journal_register_blocks' );
 

@@ -37,7 +37,7 @@ class LDJ_Admin_Entries {
 
 	public static function highlight_submenu( $submenu_file, $parent_file ) {
 		$screen = get_current_screen();
-		if ( $screen && in_array( $screen->id, array( 'learndash-lms_page_ldj-entries', 'learndash-lms_page_ldj-grade', 'learndash-lms_page_ldj-gradebook-settings' ), true ) ) {
+		if ( $screen && in_array( $screen->id, array( 'learndash-lms_page_ldj-entries', 'learndash-lms_page_ldj-grade', 'learndash-lms_page_ldj-settings' ), true ) ) {
 			return 'edit.php?post_type=ldj_prompt';
 		}
 		return $submenu_file;
@@ -101,12 +101,10 @@ class LDJ_Admin_Entries {
 			),
 		);
 
-		if ( class_exists( 'LearnDash_Gradebook' ) ) {
-			$tabs['gradebook'] = array(
-				'label' => __( 'Gradebook Settings', 'lesson-journal' ),
-				'url'   => admin_url( 'admin.php?page=ldj-gradebook-settings' ),
-			);
-		}
+		$tabs['settings'] = array(
+			'label' => __( 'Settings', 'lesson-journal' ),
+			'url'   => admin_url( 'admin.php?page=ldj-settings' ),
+		);
 
 		echo '<nav class="nav-tab-wrapper ldj-nav-tabs">';
 		foreach ( $tabs as $key => $tab ) {
@@ -342,6 +340,10 @@ class LDJ_Entries_List_Table extends WP_List_Table {
 	}
 
 	protected function column_entry_text( $item ) {
+		if ( (bool) get_post_meta( $item->prompt_id, '_ldj_private', true ) && (int) $item->user_id !== get_current_user_id() ) {
+			return '<em>' . esc_html__( '[Private]', 'lesson-journal' ) . '</em>';
+		}
+
 		$excerpt = mb_strimwidth( $item->entry_text, 0, 100, '…' );
 		$full    = esc_html( $item->entry_text );
 

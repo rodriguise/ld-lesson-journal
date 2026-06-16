@@ -137,10 +137,6 @@ class LDJ_Journal_Shortcode {
 			$title   = $course_title;
 		}
 
-		if ( empty( $entries ) ) {
-			return '<div class="ldj-journal-wrap"><p>' . esc_html__( 'No journal entries yet.', 'lesson-journal' ) . '</p></div>';
-		}
-
 		$user         = get_userdata( $user_id );
 		$date_format  = get_option( 'date_format' );
 		$time_format  = get_option( 'time_format' );
@@ -246,19 +242,24 @@ class LDJ_Journal_Shortcode {
 
 		$entry_index = 0;
 
+		if ( empty( $entries ) ) {
+			$output .= '<p class="ldj-journal-empty">' . esc_html__( 'No journal entries yet.', 'lesson-journal' ) . '</p>';
+		}
+
 		foreach ( $grouped as $group_lesson_id => $lesson_entries ) {
-			$section_title = get_the_title( $group_lesson_id );
+			$section_title    = get_the_title( $group_lesson_id );
+			$parent_lesson_id = $group_lesson_id;
 			if ( get_post_type( $group_lesson_id ) === 'sfwd-topic' ) {
-				$parent_lesson_id = 0;
 				if ( function_exists( 'learndash_get_setting' ) ) {
-					$parent_lesson_id = (int) learndash_get_setting( $group_lesson_id, 'lesson' );
-				}
-				if ( $parent_lesson_id > 0 ) {
-					$section_title = get_the_title( $parent_lesson_id ) . ' | ' . $section_title;
+					$topic_parent = (int) learndash_get_setting( $group_lesson_id, 'lesson' );
+					if ( $topic_parent > 0 ) {
+						$parent_lesson_id = $topic_parent;
+						$section_title    = get_the_title( $topic_parent ) . ' | ' . $section_title;
+					}
 				}
 			}
 
-			$output .= '<div class="ldj-journal-section"' . $content_style . '>';
+			$output .= '<div class="ldj-journal-section" data-step-id="' . esc_attr( $group_lesson_id ) . '" data-parent-lesson-id="' . esc_attr( $parent_lesson_id ) . '"' . $content_style . '>';
 			$output .= '<h3 class="ldj-journal-lesson-title">' . esc_html( $section_title ) . '</h3>';
 
 			$sub_grouped    = array();
@@ -284,6 +285,10 @@ class LDJ_Journal_Shortcode {
 						continue;
 					}
 
+					if ( (bool) get_post_meta( $entry->prompt_id, '_ldj_private', true ) && (int) $entry->user_id !== get_current_user_id() ) {
+						continue;
+					}
+
 					$rendered_question = do_blocks( $prompt->post_content );
 					$rendered_question = preg_replace(
 						'#<div[^>]*class="[^"]*ldj-screen-only[^"]*"[^>]*>.*?</div>#s',
@@ -291,9 +296,41 @@ class LDJ_Journal_Shortcode {
 						$rendered_question
 					);
 
-					$output .= '<div class="ldj-journal-entry" data-entry-index="' . esc_attr( $entry_index ) . '">';
+					$is_locked   = LDJ_Entry::is_locked_grade( $entry->grade_status ?? null );
+					$is_reopened = ! empty( $entry->reopened );
+					$is_own      = (int) $entry->user_id === $user_id;
+
+					$is_private_prompt = (bool) get_post_meta( $entry->prompt_id, '_ldj_private', true );
+					$entry_classes = 'ldj-journal-entry';
+					if ( $is_private_prompt ) {
+						$entry_classes .= ' ldj-journal-entry--private';
+					}
+
+					$output .= '<div class="' . esc_attr( $entry_classes ) . '" data-entry-index="' . esc_attr( $entry_index ) . '" data-entry-id="' . esc_attr( $entry->id ) . '" data-prompt-id="' . esc_attr( $entry->prompt_id ) . '" data-lesson-id="' . esc_attr( $group_lesson_id ) . '">';
 					$output .= '<div class="ldj-journal-question">' . wp_kses_post( wpautop( $rendered_question ) ) . '</div>';
 					$output .= '<div class="ldj-journal-answer">' . wp_kses_post( nl2br( esc_html( $entry->entry_text ) ) ) . '</div>';
+
+					if ( $is_own && ( ! $is_locked || $is_reopened ) ) {
+						$output .= '<div class="ldj-journal-entry-actions">';
+						$output .= '<button type="button" class="ldj-journal-edit-btn">' . esc_html__( 'Edit', 'lesson-journal' ) . '</button>';
+						$output .= '<button type="button" class="ldj-journal-delete-btn">' . esc_html__( 'Delete', 'lesson-journal' ) . '</button>';
+						$output .= '</div>';
+						$output .= '<div class="ldj-journal-edit-form" style="display:none">';
+						$output .= '<textarea class="ldj-journal-edit-textarea" rows="5">' . esc_textarea( $entry->entry_text ) . '</textarea>';
+						$output .= '<button type="button" class="ldj-journal-edit-save">' . esc_html__( 'Save', 'lesson-journal' ) . '</button>';
+						$output .= ' <button type="button" class="ldj-journal-edit-cancel">' . esc_html__( 'Cancel', 'lesson-journal' ) . '</button>';
+						$output .= '</div>';
+					} elseif ( $is_locked && ! $is_reopened ) {
+						$output .= '<span class="ldj-prompt-badge ldj-prompt-badge--graded">' . esc_html__( '(Graded)', 'lesson-journal' ) . '</span>';
+					}
+
+					if ( ! empty( $entry->instructor_comment ) ) {
+						$output .= '<div class="ldj-journal-comment">';
+						$output .= '<div class="ldj-journal-comment-label">' . esc_html__( 'Instructor Feedback', 'lesson-journal' ) . '</div>';
+						$output .= wp_kses_post( nl2br( esc_html( $entry->instructor_comment ) ) );
+						$output .= '</div>';
+					}
+
 					$output .= '<div class="ldj-journal-meta">';
 					$output .= '<span class="ldj-journal-date">'
 						. esc_html( date_i18n( $datetime_fmt, strtotime( $entry->updated_at ) ) )
@@ -323,6 +360,7 @@ class LDJ_Journal_Shortcode {
 		$output .= '<button type="button" class="ldj-journal-next">' . esc_html__( 'Next', 'lesson-journal' ) . ' &rarr;</button>';
 		$output .= '</div>';
 		$output .= '<div class="ldj-journal-actions">';
+		$output .= '<label class="ldj-private-toggle"><input type="checkbox" class="ldj-include-private-cb"> ' . esc_html__( 'Include private entries in print/download', 'lesson-journal' ) . '</label>';
 		if ( $show_refresh ) {
 			$output .= '<button type="button" class="ldj-journal-refresh-btn" title="' . esc_attr__( 'Refresh', 'lesson-journal' ) . '">';
 			if ( $is_text ) {

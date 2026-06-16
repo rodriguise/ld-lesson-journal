@@ -92,6 +92,18 @@ class LDJ_Post_Type {
 				'type'    => 'boolean',
 				'default' => false,
 			),
+			'_ldj_private'     => array(
+				'type'    => 'boolean',
+				'default' => false,
+			),
+			'_ldj_prompt_value' => array(
+				'type'    => 'integer',
+				'default' => 10,
+			),
+			'_ldj_rubric'       => array(
+				'type'    => 'string',
+				'default' => '',
+			),
 			'_ldj_min_chars'   => array(
 				'type'    => 'integer',
 				'default' => 0,
@@ -141,9 +153,12 @@ class LDJ_Post_Type {
 		$rows        = (int) get_post_meta( $post->ID, '_ldj_rows', true ) ?: 5;
 		$placeholder = get_post_meta( $post->ID, '_ldj_placeholder', true );
 		$graded      = (bool) get_post_meta( $post->ID, '_ldj_graded', true );
+		$private     = (bool) get_post_meta( $post->ID, '_ldj_private', true );
 		$required    = (bool) get_post_meta( $post->ID, '_ldj_required', true );
 		$min_chars   = (int) get_post_meta( $post->ID, '_ldj_min_chars', true );
 		$max_chars   = (int) get_post_meta( $post->ID, '_ldj_max_chars', true );
+		$prompt_value = (int) get_post_meta( $post->ID, '_ldj_prompt_value', true ) ?: 10;
+		$rubric       = get_post_meta( $post->ID, '_ldj_rubric', true );
 
 		if ( ( $required || $graded ) && $min_chars < 1 ) {
 			$min_chars = 1;
@@ -164,10 +179,27 @@ class LDJ_Post_Type {
 		</p>
 		<p>
 			<label for="ldj-graded">
-				<input type="checkbox" id="ldj-graded" name="_ldj_graded" value="1" <?php checked( $graded ); ?>>
+				<input type="checkbox" id="ldj-graded" name="_ldj_graded" value="1" <?php checked( $graded ); ?> <?php echo $private ? 'disabled' : ''; ?>>
 				<?php esc_html_e( 'Graded', 'lesson-journal' ); ?>
 			</label>
-			<span class="description"><?php esc_html_e( 'Graded prompts are always required and appear in the gradebook.', 'lesson-journal' ); ?></span>
+			<span class="description"><?php esc_html_e( 'Required + appears in gradebook.', 'lesson-journal' ); ?></span>
+		</p>
+		<p id="ldj-prompt-value-row" style="<?php echo $graded ? '' : 'display:none'; ?>">
+			<label for="ldj-prompt-value"><?php esc_html_e( 'Prompt value', 'lesson-journal' ); ?></label><br>
+			<input type="number" id="ldj-prompt-value" name="_ldj_prompt_value" value="<?php echo esc_attr( $prompt_value ); ?>" min="1" class="small-text">
+			<span class="description"><?php esc_html_e( 'Max score for this prompt.', 'lesson-journal' ); ?></span>
+		</p>
+		<p id="ldj-rubric-row" style="<?php echo $graded ? '' : 'display:none'; ?>">
+			<label for="ldj-rubric"><?php esc_html_e( 'Rubric', 'lesson-journal' ); ?></label><br>
+			<textarea id="ldj-rubric" name="_ldj_rubric" class="widefat" rows="3"><?php echo esc_textarea( $rubric ); ?></textarea>
+			<span class="description"><?php esc_html_e( 'Grading notes visible to instructors.', 'lesson-journal' ); ?></span>
+		</p>
+		<p>
+			<label for="ldj-private">
+				<input type="checkbox" id="ldj-private" name="_ldj_private" value="1" <?php checked( $private ); ?> <?php echo $graded ? 'disabled' : ''; ?>>
+				<?php esc_html_e( 'Private', 'lesson-journal' ); ?>
+			</label>
+			<span class="description"><?php esc_html_e( 'Only the student can see their response.', 'lesson-journal' ); ?></span>
 		</p>
 		<p>
 			<label for="ldj-required">
@@ -190,44 +222,52 @@ class LDJ_Post_Type {
 		<script>
 		(function(){
 			var gradedCb = document.getElementById('ldj-graded');
+			var privateCb = document.getElementById('ldj-private');
 			var requiredCb = document.getElementById('ldj-required');
-			var row = document.getElementById('ldj-min-chars-row');
-			var input = document.getElementById('ldj-min-chars');
+			var minRow = document.getElementById('ldj-min-chars-row');
+			var minInput = document.getElementById('ldj-min-chars');
+			var valueRow = document.getElementById('ldj-prompt-value-row');
+			var rubricRow = document.getElementById('ldj-rubric-row');
 
-			function syncRequired() {
+			function sync() {
+				privateCb.disabled = gradedCb.checked;
+				gradedCb.disabled = privateCb.checked;
+
 				if (gradedCb.checked) {
 					requiredCb.checked = true;
 					requiredCb.disabled = true;
-					if (!requiredCb.nextElementSibling || requiredCb.nextElementSibling.name !== '_ldj_required') {
-						var hidden = document.createElement('input');
-						hidden.type = 'hidden';
-						hidden.name = '_ldj_required';
-						hidden.value = '1';
-						hidden.id = 'ldj-required-hidden';
-						requiredCb.parentNode.appendChild(hidden);
+					var h = document.getElementById('ldj-required-hidden');
+					if (!h) {
+						h = document.createElement('input');
+						h.type = 'hidden'; h.name = '_ldj_required'; h.value = '1'; h.id = 'ldj-required-hidden';
+						requiredCb.parentNode.appendChild(h);
 					}
 				} else {
 					requiredCb.disabled = false;
-					var hidden = document.getElementById('ldj-required-hidden');
-					if (hidden) hidden.remove();
+					var h = document.getElementById('ldj-required-hidden');
+					if (h) h.remove();
 				}
-			}
 
-			function syncMinChars() {
 				if (requiredCb.checked || gradedCb.checked) {
-					row.style.display = '';
-					if (parseInt(input.value,10) < 1) input.value = '1';
+					minRow.style.display = '';
+					if (parseInt(minInput.value, 10) < 1) minInput.value = '1';
 				} else {
-					row.style.display = 'none';
-					input.value = '0';
+					minRow.style.display = 'none';
+					minInput.value = '0';
+				}
+
+				if (gradedCb.checked) {
+					valueRow.style.display = '';
+					rubricRow.style.display = '';
+				} else {
+					valueRow.style.display = 'none';
+					rubricRow.style.display = 'none';
 				}
 			}
 
-			gradedCb.addEventListener('change', function(){
-				syncRequired();
-				syncMinChars();
-			});
-			requiredCb.addEventListener('change', syncMinChars);
+			gradedCb.addEventListener('change', sync);
+			privateCb.addEventListener('change', sync);
+			requiredCb.addEventListener('change', sync);
 		})();
 		</script>
 		<?php
@@ -250,9 +290,16 @@ class LDJ_Post_Type {
 			return;
 		}
 
-		$graded   = ! empty( $_POST['_ldj_graded'] );
+		$graded  = ! empty( $_POST['_ldj_graded'] );
+		$private = ! empty( $_POST['_ldj_private'] );
+
+		if ( $graded && $private ) {
+			$private = false;
+		}
+
 		$required = $graded || ! empty( $_POST['_ldj_required'] );
 		update_post_meta( $post_id, '_ldj_graded', $graded );
+		update_post_meta( $post_id, '_ldj_private', $private );
 		update_post_meta( $post_id, '_ldj_required', $required );
 
 		$min_chars = absint( $_POST['_ldj_min_chars'] ?? 0 );
@@ -263,6 +310,14 @@ class LDJ_Post_Type {
 			$min_chars = 0;
 		}
 		update_post_meta( $post_id, '_ldj_min_chars', $min_chars );
+
+		if ( $graded ) {
+			$prompt_value = absint( $_POST['_ldj_prompt_value'] ?? 10 );
+			if ( $prompt_value < 1 ) {
+				$prompt_value = 10;
+			}
+			update_post_meta( $post_id, '_ldj_prompt_value', $prompt_value );
+		}
 
 		$fields = array(
 			'_ldj_rows'      => 'absint',
@@ -275,7 +330,7 @@ class LDJ_Post_Type {
 			}
 		}
 
-		$text_fields = array( '_ldj_placeholder', '_ldj_description' );
+		$text_fields = array( '_ldj_placeholder', '_ldj_description', '_ldj_rubric' );
 
 		foreach ( $text_fields as $key ) {
 			if ( isset( $_POST[ $key ] ) ) {

@@ -7,13 +7,14 @@ if ( ! defined( 'ABSPATH' ) ) {
 class LDJ_Gradebook {
 
 	public static function register() {
+		add_action( 'admin_menu', array( __CLASS__, 'add_settings_page' ), 32 );
+		add_action( 'admin_init', array( __CLASS__, 'register_settings' ) );
+		add_action( 'admin_enqueue_scripts', array( __CLASS__, 'enqueue_assets' ) );
+
 		if ( ! class_exists( 'LearnDash_Gradebook' ) ) {
 			return;
 		}
 
-		add_action( 'admin_menu', array( __CLASS__, 'add_settings_page' ), 32 );
-		add_action( 'admin_init', array( __CLASS__, 'register_settings' ) );
-		add_action( 'admin_enqueue_scripts', array( __CLASS__, 'enqueue_assets' ) );
 		add_action( 'wp_ajax_ldj_gb_components', array( __CLASS__, 'ajax_get_components' ) );
 		add_filter( 'ld_gb_user_grade_components', array( __CLASS__, 'inject_journal_grades' ), 10, 3 );
 		add_action( 'ldj_entry_graded', array( __CLASS__, 'sync_grade_to_gradebook' ), 10, 2 );
@@ -22,20 +23,20 @@ class LDJ_Gradebook {
 	public static function add_settings_page() {
 		add_submenu_page(
 			'learndash-lms',
-			__( 'Journal Gradebook Settings', 'lesson-journal' ),
-			__( 'Journal Gradebook', 'lesson-journal' ),
+			__( 'Journal Settings', 'lesson-journal' ),
+			__( 'Journal Settings', 'lesson-journal' ),
 			'manage_options',
-			'ldj-gradebook-settings',
+			'ldj-settings',
 			array( __CLASS__, 'render_settings' )
 		);
 
 		add_action( 'admin_head', function () {
-			echo '<style>#adminmenu a[href="admin.php?page=ldj-gradebook-settings"] { display: none !important; }</style>';
+			echo '<style>#adminmenu a[href="admin.php?page=ldj-settings"] { display: none !important; }</style>';
 		} );
 	}
 
 	public static function enqueue_assets( $hook ) {
-		if ( $hook !== 'learndash-lms_page_ldj-gradebook-settings' ) {
+		if ( $hook !== 'learndash-lms_page_ldj-settings' ) {
 			return;
 		}
 
@@ -78,10 +79,22 @@ class LDJ_Gradebook {
 	}
 
 	public static function register_settings() {
-		register_setting( 'ldj_gradebook', 'ldj_gradebook_map', array(
+		register_setting( 'ldj_settings', 'ldj_gradebook_map', array(
 			'type'              => 'array',
 			'sanitize_callback' => array( __CLASS__, 'sanitize_map' ),
 			'default'           => array(),
+		) );
+
+		register_setting( 'ldj_settings', 'ldj_outstanding_threshold', array(
+			'type'              => 'integer',
+			'sanitize_callback' => 'absint',
+			'default'           => 90,
+		) );
+
+		register_setting( 'ldj_settings', 'ldj_satisfactory_threshold', array(
+			'type'              => 'integer',
+			'sanitize_callback' => 'absint',
+			'default'           => 80,
 		) );
 	}
 
@@ -100,70 +113,87 @@ class LDJ_Gradebook {
 		echo '<div class="wrap">';
 		echo '<h1 class="wp-heading-inline">' . esc_html__( 'Student Journal', 'lesson-journal' ) . '</h1>';
 		echo '<hr class="wp-header-end">';
-		LDJ_Admin_Entries::output_tabs( 'gradebook' );
+		LDJ_Admin_Entries::output_tabs( 'settings' );
 
-		$map = get_option( 'ldj_gradebook_map', array() );
+		$outstanding  = (int) get_option( 'ldj_outstanding_threshold', 90 );
+		$satisfactory = (int) get_option( 'ldj_satisfactory_threshold', 80 );
 
-		$gradebooks = get_posts( array(
-			'post_type'      => 'gradebook',
-			'post_status'    => 'publish',
-			'posts_per_page' => 50,
-			'orderby'        => 'title',
-			'order'          => 'ASC',
-		) );
+		echo '<form method="post" action="options.php">';
+		settings_fields( 'ldj_settings' );
 
-		$selected_gb = absint( $map['gradebook_id'] ?? 0 );
-		$selected_comp = absint( $map['component_id'] ?? 0 );
+		echo '<h2>' . esc_html__( 'Grading Thresholds', 'lesson-journal' ) . '</h2>';
+		echo '<p>' . esc_html__( 'Grade status is automatically determined by the score percentage. Percentages are rounded up.', 'lesson-journal' ) . '</p>';
+		echo '<table class="form-table">';
+		echo '<tr>';
+		echo '<th scope="row"><label for="ldj-outstanding">' . esc_html__( 'Outstanding', 'lesson-journal' ) . '</label></th>';
+		echo '<td><input type="number" id="ldj-outstanding" name="ldj_outstanding_threshold" value="' . esc_attr( $outstanding ) . '" min="1" max="100" class="small-text"> %';
+		echo '<p class="description">' . esc_html__( 'Score at or above this percentage is Outstanding. Entry becomes locked.', 'lesson-journal' ) . '</p></td>';
+		echo '</tr>';
+		echo '<tr>';
+		echo '<th scope="row"><label for="ldj-satisfactory">' . esc_html__( 'Satisfactory', 'lesson-journal' ) . '</label></th>';
+		echo '<td><input type="number" id="ldj-satisfactory" name="ldj_satisfactory_threshold" value="' . esc_attr( $satisfactory ) . '" min="1" max="100" class="small-text"> %';
+		echo '<p class="description">' . esc_html__( 'Score at or above this percentage (but below Outstanding) is Satisfactory. Entry becomes locked.', 'lesson-journal' ) . '</p></td>';
+		echo '</tr>';
+		echo '</table>';
 
-		$components = array();
-		if ( $selected_gb && function_exists( 'ld_gb_get_field' ) ) {
-			$components = ld_gb_get_field( 'components', $selected_gb );
-			if ( ! is_array( $components ) ) {
-				$components = array();
+		// Only show gradebook settings when the plugin is active
+		if ( class_exists( 'LearnDash_Gradebook' ) ) {
+			// Keep the exact same gradebook settings UI that exists now
+			$map = get_option( 'ldj_gradebook_map', array() );
+			$gradebooks = get_posts( array(
+				'post_type'      => 'gradebook',
+				'post_status'    => 'publish',
+				'posts_per_page' => 50,
+				'orderby'        => 'title',
+				'order'          => 'ASC',
+			) );
+			$selected_gb = absint( $map['gradebook_id'] ?? 0 );
+			$selected_comp = absint( $map['component_id'] ?? 0 );
+			$components = array();
+			if ( $selected_gb && function_exists( 'ld_gb_get_field' ) ) {
+				$components = ld_gb_get_field( 'components', $selected_gb );
+				if ( ! is_array( $components ) ) {
+					$components = array();
+				}
 			}
-		}
 
-		?>
-			<p><?php esc_html_e( 'Connect journal grades to a LearnDash Gradebook component. When you grade journal entries on graded prompts, scores will automatically sync to the selected gradebook component.', 'lesson-journal' ); ?></p>
+			echo '<h2>' . esc_html__( 'Gradebook Integration', 'lesson-journal' ) . '</h2>';
+			echo '<p>' . esc_html__( 'Connect journal grades to a LearnDash Gradebook component.', 'lesson-journal' ) . '</p>';
+			echo '<table class="form-table">';
+			echo '<tr>';
+			echo '<th scope="row"><label for="ldj-gb">' . esc_html__( 'Gradebook', 'lesson-journal' ) . '</label></th>';
+			echo '<td><select name="ldj_gradebook_map[gradebook_id]" id="ldj-gb">';
+			echo '<option value="">' . esc_html__( '— None (disabled) —', 'lesson-journal' ) . '</option>';
+			foreach ( $gradebooks as $gb ) {
+				printf(
+					'<option value="%d" %s>%s</option>',
+					$gb->ID,
+					selected( $selected_gb, $gb->ID, false ),
+					esc_html( $gb->post_title )
+				);
+			}
+			echo '</select></td>';
+			echo '</tr>';
+			echo '<tr>';
+			echo '<th scope="row"><label for="ldj-comp">' . esc_html__( 'Component', 'lesson-journal' ) . '</label></th>';
+			echo '<td><select name="ldj_gradebook_map[component_id]" id="ldj-comp">';
+			echo '<option value="">' . esc_html__( '— Select —', 'lesson-journal' ) . '</option>';
+			foreach ( $components as $comp ) {
+				$comp_id = absint( $comp['id'] ?? 0 );
+				$comp_name = $comp['name'] ?? '';
+				if ( ! $comp_id ) continue;
+				printf(
+					'<option value="%d" %s>%s</option>',
+					$comp_id,
+					selected( $selected_comp, $comp_id, false ),
+					esc_html( $comp_name ?: "#{$comp_id}" )
+				);
+			}
+			echo '</select></td>';
+			echo '</tr>';
+			echo '</table>';
 
-			<form method="post" action="options.php">
-				<?php settings_fields( 'ldj_gradebook' ); ?>
-				<table class="form-table">
-					<tr>
-						<th scope="row"><label for="ldj-gb"><?php esc_html_e( 'Gradebook', 'lesson-journal' ); ?></label></th>
-						<td>
-							<select name="ldj_gradebook_map[gradebook_id]" id="ldj-gb">
-								<option value=""><?php esc_html_e( '— None (disabled) —', 'lesson-journal' ); ?></option>
-								<?php foreach ( $gradebooks as $gb ) : ?>
-									<option value="<?php echo esc_attr( $gb->ID ); ?>" <?php selected( $selected_gb, $gb->ID ); ?>>
-										<?php echo esc_html( $gb->post_title ); ?>
-									</option>
-								<?php endforeach; ?>
-							</select>
-							<p class="description"><?php esc_html_e( 'Select the gradebook to sync journal grades into.', 'lesson-journal' ); ?></p>
-						</td>
-					</tr>
-					<tr>
-						<th scope="row"><label for="ldj-comp"><?php esc_html_e( 'Component', 'lesson-journal' ); ?></label></th>
-						<td>
-							<select name="ldj_gradebook_map[component_id]" id="ldj-comp">
-								<option value=""><?php esc_html_e( '— Select —', 'lesson-journal' ); ?></option>
-								<?php foreach ( $components as $comp ) :
-									$comp_id = absint( $comp['id'] ?? 0 );
-									$comp_name = $comp['name'] ?? '';
-									if ( ! $comp_id ) continue;
-								?>
-									<option value="<?php echo esc_attr( $comp_id ); ?>" <?php selected( $selected_comp, $comp_id ); ?>>
-										<?php echo esc_html( $comp_name ?: "#{$comp_id}" ); ?>
-									</option>
-								<?php endforeach; ?>
-							</select>
-							<p class="description"><?php esc_html_e( 'Create a "Journal" component in your gradebook, then select it here. Journal grades will appear as grades within this component.', 'lesson-journal' ); ?></p>
-						</td>
-					</tr>
-				</table>
-				<?php submit_button(); ?>
-			</form>
+			?>
 			<script>
 			(function(){
 				var gbSelect = document.getElementById('ldj-gb');
@@ -201,8 +231,12 @@ class LDJ_Gradebook {
 				});
 			})();
 			</script>
-		</div>
-		<?php
+			<?php
+		}
+
+		submit_button();
+		echo '</form>';
+		echo '</div>';
 	}
 
 	public static function inject_journal_grades( $components, $gradebook_id, $user_id ) {
@@ -230,7 +264,7 @@ class LDJ_Gradebook {
 
 			if ( $entry->grade_score !== null && $entry->grade_max !== null && (float) $entry->grade_max > 0 ) {
 				$score = round( ( (float) $entry->grade_score / (float) $entry->grade_max ) * 100, 2 );
-			} elseif ( $entry->grade_status === 'pass' ) {
+			} elseif ( LDJ_Entry::is_passing_grade( $entry->grade_status ) ) {
 				$score = 100;
 			}
 
@@ -241,7 +275,7 @@ class LDJ_Gradebook {
 				'name'      => sprintf( '%s — %s', $lesson_title, $prompt_title ),
 				'type'      => 'journal',
 				'score'     => $score,
-				'status'    => $entry->grade_status === 'pass' ? 'completed' : 'failed',
+				'status'    => LDJ_Entry::is_passing_grade( $entry->grade_status ) ? 'completed' : 'failed',
 				'completed' => strtotime( $entry->graded_at ),
 				'post_id'   => $entry->prompt_id,
 			);
@@ -302,7 +336,7 @@ class LDJ_Gradebook {
 		$score = 0;
 		if ( $entry->grade_score !== null && $entry->grade_max !== null && (float) $entry->grade_max > 0 ) {
 			$score = round( ( (float) $entry->grade_score / (float) $entry->grade_max ) * 100, 2 );
-		} elseif ( $entry->grade_status === 'pass' ) {
+		} elseif ( LDJ_Entry::is_passing_grade( $entry->grade_status ) ) {
 			$score = 100;
 		}
 
@@ -312,7 +346,7 @@ class LDJ_Gradebook {
 			'component' => $component_id,
 			'gradebook' => $gradebook_id,
 			'user_id'   => $entry->user_id,
-			'status'    => $entry->grade_status === 'pass' ? 'completed' : 'failed',
+			'status'    => LDJ_Entry::is_passing_grade( $entry->grade_status ) ? 'completed' : 'failed',
 			'completed' => time(),
 		) );
 	}

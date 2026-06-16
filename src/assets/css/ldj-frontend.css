@@ -24,7 +24,7 @@
 	counter-increment: ldj-prompt;
 }
 
-.ldj-group--numbered > .ldj-prompt-wrap > .ldj-prompt-text > p:first-child::before {
+.ldj-group--numbered > .ldj-prompt-wrap > .ldj-prompt-text::before {
 	content: counter(ldj-prompt) ". ";
 	font-weight: 600;
 }
@@ -539,6 +539,37 @@
 	animation: ldj-spin 1s linear infinite;
 }
 
+/* === Prompt Meta Badges === */
+
+.ldj-prompt-meta {
+	display: flex;
+	gap: 0.5em;
+	margin-top: 0.4em;
+}
+
+.ldj-prompt-badge {
+	font-size: 0.7em;
+	text-transform: uppercase;
+	letter-spacing: 0.05em;
+	padding: 0.15em 0.5em;
+	border-radius: 3px;
+	color: #6b7280;
+	border: 1px solid #e5e7eb;
+	cursor: default;
+}
+
+.ldj-prompt-badge--required {
+	color: #92400e;
+	border-color: #fcd34d;
+	background: #fffbeb;
+}
+
+.ldj-prompt-badge--private {
+	color: #1e40af;
+	border-color: #93c5fd;
+	background: #eff6ff;
+}
+
 /* === Accordion === */
 
 .ldj-group--accordion > .ldj-prompt-wrap {
@@ -778,4 +809,481 @@
 		padding: 0;
 		background: none;
 	}
+}
+
+/* === Frontend Grader === */
+
+.ldj-grader {
+	max-width: 900px;
+	margin: 0 auto;
+}
+
+.ldj-grader-title {
+	margin-bottom: 1em;
+}
+
+.ldj-grader-selectors {
+	display: flex;
+	gap: 1em;
+	flex-wrap: wrap;
+	margin-bottom: 2em;
+	padding: 1.25em;
+	background: #f9fafb;
+	border: 1px solid #e5e7eb;
+	border-radius: 8px;
+}
+
+.ldj-grader-selector {
+	flex: 1;
+	min-width: 200px;
+}
+
+.ldj-grader-selector label {
+	display: block;
+	font-weight: 600;
+	font-size: 0.85em;
+	text-transform: uppercase;
+	letter-spacing: 0.5px;
+	color: #6b7280;
+	margin-bottom: 0.4em;
+}
+
+.ldj-grader-selector select {
+	width: 100%;
+	padding: 0.5em 0.75em;
+	border: 1px solid #d1d5db;
+	border-radius: 6px;
+	font-size: 0.95em;
+	background: #fff;
+}
+
+.ldj-grader-header {
+	margin-bottom: 1.5em;
+}
+
+.ldj-grader-header h3 {
+	margin: 0 0 0.25em;
+}
+
+.ldj-grader-student-name {
+	color: #6b7280;
+	margin: 0;
+}
+
+.ldj-grader-summary {
+	background: #eff6ff;
+	border-left: 4px solid #3b82f6;
+	padding: 0.75em 1em;
+	margin-bottom: 1.5em;
+	border-radius: 0 6px 6px 0;
+}
+
+.ldj-grader-empty {
+	color: #6b7280;
+	font-style: italic;
+	padding: 2em;
+	text-align: center;
+	background: #f9fafb;
+	border: 1px solid #e5e7eb;
+	border-radius: 8px;
+}
+
+.ldj-grader-error {
+	color: #dc2626;
+}
+
+/* Grading entry cards (shared between admin and frontend grader) */
+
+.ldj-grader .ldj-grade-entry {
+	background: #fff;
+	border: 1px solid #e5e7eb;
+	border-radius: 8px;
+	margin-bottom: 1.5em;
+	overflow: hidden;
+}
+
+.ldj-grader .ldj-grade-entry-header {
+	display: flex;
+	justify-content: space-between;
+	align-items: center;
+	padding: 0.75em 1em;
+	background: #f9fafb;
+	border-bottom: 1px solid #e5e7eb;
+}
+
+.ldj-grader .ldj-grade-entry-header h4 {
+	margin: 0;
+	font-size: 1em;
+}
+
+.ldj-grader .ldj-grade-date {
+	color: #9ca3af;
+	font-size: 0.85em;
+}
+
+.ldj-grader .ldj-required-badge {
+	display: inline-block;
+	background: #d97706;
+	color: #fff;
+	font-size: 0.7em;
+	font-weight: 600;
+	padding: 1px 6px;
+	border-radius: 3px;
+	margin-left: 6px;
+	vertical-align: middle;
+}
+
+.ldj-grader .ldj-grade-question {
+	padding: 0.75em 1em;
+	background: #fafafa;
+	border-bottom: 1px solid #f3f4f6;
+	font-size: 0.9em;
+	color: #6b7280;
+}
+
+.ldj-grader .ldj-grade-question p:last-child {
+	margin-bottom: 0;
+}
+
+.ldj-grader .ldj-grade-answer {
+	padding: 0.75em 1em;
+	border-bottom: 1px solid #f3f4f6;
+}
+
+.ldj-grader .ldj-grade-answer strong {
+	display: block;
+	margin-bottom: 0.4em;
+	font-size: 0.75em;
+	text-transform: uppercase;
+	color: #9ca3af;
+	letter-spacing: 0.5px;
+}
+
+.ldj-grader .ldj-grade-answer-text {
+	background: #fafafa;
+	border: 1px solid #e5e7eb;
+	border-radius: 6px;
+	padding: 0.75em 1em;
+	line-height: 1.6;
+	white-space: pre-wrap;
+	max-height: 300px;
+	overflow-y: auto;
+}
+
+.ldj-grader .ldj-grade-controls {
+	padding: 0.75em 1em;
+}
+
+.ldj-grader .ldj-grade-current {
+	margin-bottom: 0.5em;
+}
+
+.ldj-grader .ldj-badge {
+	display: inline-block;
+	font-size: 0.8em;
+	font-weight: 600;
+	padding: 2px 8px;
+	border-radius: 4px;
+}
+
+.ldj-grader .ldj-badge-outstanding {
+	background-color: #2271b1;
+	color: #fff;
+}
+
+.ldj-grader .ldj-badge-satisfactory,
+.ldj-grader .ldj-badge-pass {
+	background-color: #00a32a;
+	color: #fff;
+}
+
+.ldj-grader .ldj-badge-insufficient,
+.ldj-grader .ldj-badge-redo,
+.ldj-grader .ldj-badge-fail {
+	background-color: #d63638;
+	color: #fff;
+}
+
+.ldj-grader .ldj-badge-ungraded {
+	background: #f3f4f6;
+	color: #6b7280;
+}
+
+.ldj-grader .ldj-badge-reopened {
+	background-color: #dba617;
+	color: #fff;
+}
+
+.ldj-grader .ldj-reopen-btn {
+	margin-top: 0.5em;
+}
+
+.ldj-grader .ldj-grade-score {
+	font-weight: 600;
+	margin-left: 4px;
+}
+
+.ldj-grader .ldj-grade-by {
+	color: #9ca3af;
+	font-size: 0.85em;
+	margin-left: 6px;
+}
+
+.ldj-grader .ldj-grade-actions {
+	display: flex;
+	align-items: center;
+	gap: 0.75em;
+	flex-wrap: wrap;
+}
+
+.ldj-grader .ldj-grade-passfail {
+	display: flex;
+	gap: 4px;
+}
+
+.ldj-grader-btn {
+	display: inline-block;
+	padding: 0.4em 0.9em;
+	font-size: 0.9em;
+	border: 1px solid #d1d5db;
+	border-radius: 6px;
+	background: #fff;
+	cursor: pointer;
+	transition: background 0.15s, border-color 0.15s;
+}
+
+.ldj-grader-btn:hover {
+	background: #f9fafb;
+}
+
+.ldj-grader-btn:disabled {
+	opacity: 0.5;
+	cursor: not-allowed;
+}
+
+.ldj-grader .ldj-grade-passfail .ldj-grader-btn[data-grade-status="pass"] {
+	color: #065f46;
+	border-color: #065f46;
+}
+
+.ldj-grader .ldj-grade-passfail .ldj-grader-btn[data-grade-status="pass"]:hover {
+	background: #d1fae5;
+}
+
+.ldj-grader .ldj-grade-passfail .ldj-grader-btn[data-grade-status="fail"] {
+	color: #991b1b;
+	border-color: #991b1b;
+}
+
+.ldj-grader .ldj-grade-passfail .ldj-grader-btn[data-grade-status="fail"]:hover {
+	background: #fee2e2;
+}
+
+.ldj-grader .ldj-grade-score-form {
+	display: flex;
+	align-items: center;
+	gap: 4px;
+}
+
+.ldj-grader .ldj-score-input,
+.ldj-grader .ldj-max-input {
+	width: 70px;
+	padding: 0.4em 0.5em;
+	border: 1px solid #d1d5db;
+	border-radius: 6px;
+	text-align: center;
+	font-size: 0.9em;
+}
+
+.ldj-grader .ldj-grade-clear {
+	color: #9ca3af !important;
+	border-color: #d1d5db !important;
+}
+
+.ldj-grader .ldj-grade-feedback {
+	margin-top: 0.4em;
+	font-size: 0.85em;
+	min-height: 1.2em;
+}
+
+.ldj-grader .ldj-grade-success {
+	color: #059669;
+}
+
+.ldj-grader .ldj-grade-error {
+	color: #dc2626;
+}
+
+.ldj-grader .ldj-collapsible {
+	margin-bottom: 8px;
+}
+
+.ldj-grader .ldj-collapse-toggle {
+	background: none;
+	border: 1px solid #ddd;
+	border-radius: 4px;
+	padding: 4px 10px;
+	cursor: pointer;
+	font-size: 13px;
+	color: #666;
+	display: inline-flex;
+	align-items: center;
+	gap: 4px;
+}
+
+.ldj-grader .ldj-collapse-toggle::before {
+	content: '\25BC';
+	font-size: 9px;
+	transition: transform 0.2s;
+}
+
+.ldj-grader .ldj-collapse-toggle.ldj-collapsed::before {
+	transform: rotate(-90deg);
+}
+
+.ldj-grader .ldj-collapse-toggle:hover {
+	border-color: #999;
+	color: #333;
+}
+
+.ldj-grader .ldj-collapsible-body {
+	margin-top: 8px;
+	padding: 8px 12px;
+	border-left: 3px solid #ddd;
+	background: #f9f9f9;
+}
+
+.ldj-grader .ldj-prompt-max {
+	font-weight: 600;
+	color: #666;
+}
+
+/* Instructor comment section (grader) */
+.ldj-grader .ldj-comment-section {
+	margin-top: 10px;
+	padding-top: 10px;
+	border-top: 1px solid #eee;
+}
+
+.ldj-comment-label {
+	display: block;
+	font-weight: 600;
+	margin-bottom: 4px;
+	font-size: 14px;
+}
+
+.ldj-comment-input {
+	width: 100%;
+	font-size: 14px;
+	padding: 6px 8px;
+	border: 1px solid #ddd;
+	border-radius: 4px;
+	margin-bottom: 6px;
+	resize: vertical;
+}
+
+.ldj-comment-save-btn {
+	font-size: 13px;
+	padding: 4px 12px;
+	cursor: pointer;
+}
+
+/* Instructor comment display (journal viewer) */
+.ldj-journal-comment {
+	margin-top: 8px;
+	padding: 8px 12px;
+	background: #f0f6fc;
+	border-left: 3px solid #2271b1;
+	border-radius: 0 4px 4px 0;
+	font-size: 0.9em;
+}
+
+.ldj-journal-comment-label {
+	font-weight: 600;
+	font-size: 0.85em;
+	color: #2271b1;
+	margin-bottom: 2px;
+}
+
+/* Hide comments in print */
+@media print {
+	.ldj-journal-comment {
+		display: none !important;
+	}
+}
+
+/* Graded badge rubric popup */
+.ldj-prompt-badge--graded.ldj-has-popup {
+	position: relative;
+	cursor: help;
+}
+
+.ldj-badge-popup {
+	display: none;
+	position: absolute;
+	bottom: calc(100% + 8px);
+	left: 50%;
+	transform: translateX(-50%);
+	z-index: 100;
+	background: #fff;
+	border: 1px solid #ccc;
+	border-radius: 6px;
+	padding: 12px;
+	min-width: 250px;
+	max-width: 360px;
+	box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+	font-size: 13px;
+	line-height: 1.5;
+	color: #333;
+	text-align: left;
+	font-weight: normal;
+	white-space: normal;
+}
+
+.ldj-has-popup:hover .ldj-badge-popup,
+.ldj-has-popup:focus-within .ldj-badge-popup {
+	display: block;
+}
+
+.ldj-badge-popup strong {
+	display: block;
+	margin-bottom: 4px;
+}
+
+/* Private toggle in journal toolbar */
+.ldj-private-toggle {
+	display: inline-flex;
+	align-items: center;
+	gap: 6px;
+	font-size: 0.85em;
+	color: #666;
+	cursor: pointer;
+	white-space: nowrap;
+}
+
+.ldj-private-toggle input {
+	margin: 0;
+}
+
+/* Hide private entries in print when toggle is off */
+@media print {
+	.ldj-hide-private .ldj-journal-entry--private {
+		display: none !important;
+	}
+}
+
+/* Journal browse shortcode */
+.ldj-browse-selectors {
+	display: flex;
+	gap: 12px;
+	flex-wrap: wrap;
+	margin-bottom: 16px;
+}
+
+.ldj-browse-selectors select {
+	padding: 6px 10px;
+	border: 1px solid #ddd;
+	border-radius: 4px;
+	font-size: 14px;
+	min-width: 200px;
 }

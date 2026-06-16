@@ -177,10 +177,33 @@ class LDJ_Shortcode {
 		$output .= '<div class="ldj-prompt-text">' . wp_kses_post( wpautop( do_blocks( $prompt->post_content ) ) ) . '</div>';
 
 		if ( $has_entry ) {
+			$is_locked = $existing && LDJ_Entry::is_locked_grade( $existing->grade_status ?? null );
 			$output .= '<div class="ldj-completed-entry">';
 			$output .= '<div class="ldj-entry-display">' . wp_kses_post( nl2br( esc_html( $entry_text ) ) ) . '</div>';
-			$output .= '<button type="button" class="ldj-edit-entry">' . esc_html__( 'Edit', 'lesson-journal' ) . '</button>';
-			$output .= '<button type="button" class="ldj-delete-entry">' . esc_html__( 'Delete', 'lesson-journal' ) . '</button>';
+			if ( ! $is_locked ) {
+				$output .= '<button type="button" class="ldj-edit-entry">' . esc_html__( 'Edit', 'lesson-journal' ) . '</button>';
+				$output .= '<button type="button" class="ldj-delete-entry">' . esc_html__( 'Delete', 'lesson-journal' ) . '</button>';
+			} else {
+				$output .= '<span class="ldj-prompt-badge ldj-prompt-badge--graded">' . esc_html__( '(Graded)', 'lesson-journal' ) . '</span>';
+			}
+			$output .= '</div>';
+		}
+
+		$is_graded_prompt = (bool) get_post_meta( $prompt_id, '_ldj_graded', true );
+		if ( $is_graded_prompt ) {
+			$prompt_value_hint = (int) get_post_meta( $prompt_id, '_ldj_prompt_value', true ) ?: 10;
+			$rubric_text       = get_post_meta( $prompt_id, '_ldj_rubric', true );
+
+			$output .= '<div class="ldj-rubric-hint" tabindex="0">';
+			$output .= '<span class="ldj-rubric-hint-icon">?</span>';
+			$output .= '<div class="ldj-rubric-hint-popup">';
+			$output .= '<strong>' . sprintf( esc_html__( 'Possible Points: %d', 'lesson-journal' ), $prompt_value_hint ) . '</strong>';
+			if ( $rubric_text ) {
+				$output .= wp_kses_post( wpautop( $rubric_text ) );
+			} else {
+				$output .= '<em>' . esc_html__( 'No rubric provided.', 'lesson-journal' ) . '</em>';
+			}
+			$output .= '</div>';
 			$output .= '</div>';
 		}
 
@@ -219,6 +242,18 @@ class LDJ_Shortcode {
 
 		if ( $description ) {
 			$output .= '<p class="ldj-prompt-description">' . esc_html( ucfirst( $description ) ) . '</p>';
+		}
+
+		$is_private = (bool) get_post_meta( $prompt_id, '_ldj_private', true );
+		if ( $required || $is_private ) {
+			$output .= '<div class="ldj-prompt-meta">';
+			if ( $required ) {
+				$output .= '<span class="ldj-prompt-badge ldj-prompt-badge--required">' . esc_html__( 'Required', 'lesson-journal' ) . '</span>';
+			}
+			if ( $is_private ) {
+				$output .= '<span class="ldj-prompt-badge ldj-prompt-badge--private" title="' . esc_attr__( 'Only you can see this response', 'lesson-journal' ) . '">' . esc_html__( 'Private', 'lesson-journal' ) . '</span>';
+			}
+			$output .= '</div>';
 		}
 
 		$output .= '</div>';

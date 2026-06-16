@@ -189,8 +189,10 @@ class LDJ_Completion {
 				if ( $inner['blockName'] === 'ldj/prompt' && ! empty( $inner['attrs']['promptId'] ) ) {
 					$position++;
 					$pid = absint( $inner['attrs']['promptId'] );
-					$prompt_ids[]             = $pid;
-					self::$positions[ $pid ] = $position;
+					if ( (bool) get_post_meta( $pid, '_ldj_required', true ) ) {
+						$prompt_ids[]             = $pid;
+						self::$positions[ $pid ] = $position;
+					}
 				}
 			}
 		}
@@ -224,8 +226,10 @@ class LDJ_Completion {
 				foreach ( $ldj_matches[1] as $id ) {
 					$position++;
 					$pid = absint( $id );
-					$prompt_ids[]             = $pid;
-					self::$positions[ $pid ] = $position;
+					if ( (bool) get_post_meta( $pid, '_ldj_required', true ) ) {
+						$prompt_ids[]             = $pid;
+						self::$positions[ $pid ] = $position;
+					}
 				}
 			}
 		}

@@ -23,6 +23,10 @@ function PromptSettings( { prompt, onUpdated } ) {
 	const [ required, setRequired ] = useState( !! meta._ldj_required );
 	const [ minChars, setMinChars ] = useState( meta._ldj_min_chars || 0 );
 	const [ maxChars, setMaxChars ] = useState( meta._ldj_max_chars || 0 );
+	const [ graded, setGraded ] = useState( !! meta._ldj_graded );
+	const [ isPrivate, setIsPrivate ] = useState( !! meta._ldj_private );
+	const [ promptValue, setPromptValue ] = useState( meta._ldj_prompt_value || 10 );
+	const [ rubric, setRubric ] = useState( meta._ldj_rubric || '' );
 	const [ saving, setSaving ] = useState( false );
 	const [ dirty, setDirty ] = useState( false );
 	const [ notice, setNotice ] = useState( '' );
@@ -46,6 +50,10 @@ function PromptSettings( { prompt, onUpdated } ) {
 			setRequired( !! m._ldj_required );
 			setMinChars( m._ldj_min_chars || 0 );
 			setMaxChars( m._ldj_max_chars || 0 );
+			setGraded( !! m._ldj_graded );
+			setIsPrivate( !! m._ldj_private );
+			setPromptValue( m._ldj_prompt_value || 10 );
+			setRubric( m._ldj_rubric || '' );
 			setDirty( false );
 			dirtyRef.current = false;
 		}
@@ -69,7 +77,8 @@ function PromptSettings( { prompt, onUpdated } ) {
 		setSaving( true );
 		savingRef.current = true;
 		setNotice( '' );
-		const finalMinChars = required ? Math.max( 1, minChars ) : 0;
+		const finalRequired = graded || required;
+		const finalMinChars = finalRequired ? Math.max( 1, minChars ) : 0;
 		apiFetch( {
 			path: `/wp/v2/ldj-prompts/${ prompt.id }`,
 			method: 'POST',
@@ -78,9 +87,13 @@ function PromptSettings( { prompt, onUpdated } ) {
 					_ldj_description: description,
 					_ldj_rows: rows,
 					_ldj_placeholder: placeholder,
-					_ldj_required: required,
+					_ldj_required: finalRequired,
 					_ldj_min_chars: finalMinChars,
 					_ldj_max_chars: maxChars,
+					_ldj_graded: graded,
+					_ldj_private: graded ? false : isPrivate,
+					_ldj_prompt_value: promptValue,
+					_ldj_rubric: rubric,
 				},
 			},
 		} )
@@ -128,18 +141,21 @@ function PromptSettings( { prompt, onUpdated } ) {
 			/>
 			<ToggleControl
 				label={ __( 'Required', 'lesson-journal' ) }
-				help={ required
-					? __( 'Students must write at least the minimum characters.', 'lesson-journal' )
-					: __( 'Response is optional.', 'lesson-journal' )
+				help={ graded
+					? __( 'Always required when graded.', 'lesson-journal' )
+					: required
+						? __( 'Students must write at least the minimum characters.', 'lesson-journal' )
+						: __( 'Response is optional.', 'lesson-journal' )
 				}
-				checked={ required }
+				checked={ required || graded }
+				disabled={ graded }
 				onChange={ ( val ) => {
 					change( setRequired, val );
 					if ( val && minChars < 1 ) change( setMinChars, 1 );
 					if ( ! val ) change( setMinChars, 0 );
 				} }
 			/>
-			{ required && (
+			{ ( required || graded ) && (
 				<TextControl
 					label={ __( 'Min characters', 'lesson-journal' ) }
 					type="number"
@@ -158,6 +174,57 @@ function PromptSettings( { prompt, onUpdated } ) {
 				min={ 0 }
 				__nextHasNoMarginBottom
 			/>
+			<hr />
+			<ToggleControl
+				label={ __( 'Graded', 'lesson-journal' ) }
+				help={ graded
+					? __( 'Instructors can score this prompt.', 'lesson-journal' )
+					: __( 'Not scored by instructors.', 'lesson-journal' )
+				}
+				checked={ graded }
+				disabled={ isPrivate }
+				onChange={ ( val ) => {
+					change( setGraded, val );
+					if ( val ) {
+						change( setRequired, true );
+						if ( minChars < 1 ) change( setMinChars, 1 );
+						change( setIsPrivate, false );
+					}
+				} }
+			/>
+			{ graded && (
+				<>
+					<TextControl
+						label={ __( 'Point value', 'lesson-journal' ) }
+						type="number"
+						value={ promptValue }
+						onChange={ ( val ) => change( setPromptValue, parseInt( val, 10 ) || 10 ) }
+						min={ 1 }
+						__nextHasNoMarginBottom
+					/>
+					<TextareaControl
+						label={ __( 'Rubric', 'lesson-journal' ) }
+						help={ __( 'Grading notes visible to instructors.', 'lesson-journal' ) }
+						value={ rubric }
+						onChange={ ( val ) => change( setRubric, val ) }
+						rows={ 3 }
+						__nextHasNoMarginBottom
+					/>
+				</>
+			) }
+			<ToggleControl
+				label={ __( 'Private', 'lesson-journal' ) }
+				help={ isPrivate
+					? __( 'Only the student can see their response.', 'lesson-journal' )
+					: __( 'Visible to instructors.', 'lesson-journal' )
+				}
+				checked={ isPrivate }
+				disabled={ graded }
+				onChange={ ( val ) => {
+					change( setIsPrivate, val );
+					if ( val ) change( setGraded, false );
+				} }
+			/>
 			{ dirty && (
 				<Button
 					variant="primary"
@@ -174,7 +241,7 @@ function PromptSettings( { prompt, onUpdated } ) {
 	);
 }
 
-function PromptForm( { title, description, content, rows, placeholder, required, minChars, maxChars, onChange, onSave, saving, saveLabel, error, onError } ) {
+function PromptForm( { title, description, content, rows, placeholder, required, minChars, maxChars, graded, isPrivate, promptValue, rubric, onChange, onSave, saving, saveLabel, error, onError } ) {
 	return (
 		<>
 			{ error && (
@@ -229,11 +296,14 @@ function PromptForm( { title, description, content, rows, placeholder, required,
 
 			<ToggleControl
 				label={ __( 'Required', 'lesson-journal' ) }
-				help={ required
-					? __( 'Students must write at least the minimum characters.', 'lesson-journal' )
-					: __( 'Response is optional.', 'lesson-journal' )
+				help={ graded
+					? __( 'Always required when graded.', 'lesson-journal' )
+					: required
+						? __( 'Students must write at least the minimum characters.', 'lesson-journal' )
+						: __( 'Response is optional.', 'lesson-journal' )
 				}
-				checked={ required }
+				checked={ required || graded }
+				disabled={ graded }
 				onChange={ ( val ) => {
 					onChange( { required: val } );
 					if ( val && minChars < 1 ) {
@@ -245,7 +315,7 @@ function PromptForm( { title, description, content, rows, placeholder, required,
 				} }
 			/>
 
-			{ required && (
+			{ ( required || graded ) && (
 				<TextControl
 					label={ __( 'Min characters', 'lesson-journal' ) }
 					type="number"
@@ -264,6 +334,60 @@ function PromptForm( { title, description, content, rows, placeholder, required,
 				onChange={ ( val ) => onChange( { maxChars: parseInt( val, 10 ) || 0 } ) }
 				min={ 0 }
 				__nextHasNoMarginBottom
+			/>
+
+			<hr />
+
+			<ToggleControl
+				label={ __( 'Graded', 'lesson-journal' ) }
+				help={ graded
+					? __( 'Instructors can score this prompt.', 'lesson-journal' )
+					: __( 'Not scored by instructors.', 'lesson-journal' )
+				}
+				checked={ graded }
+				disabled={ isPrivate }
+				onChange={ ( val ) => {
+					onChange( { graded: val } );
+					if ( val ) {
+						onChange( { required: true, isPrivate: false } );
+						if ( minChars < 1 ) onChange( { minChars: 1 } );
+					}
+				} }
+			/>
+
+			{ graded && (
+				<>
+					<TextControl
+						label={ __( 'Point value', 'lesson-journal' ) }
+						type="number"
+						value={ promptValue }
+						onChange={ ( val ) => onChange( { promptValue: parseInt( val, 10 ) || 10 } ) }
+						min={ 1 }
+						__nextHasNoMarginBottom
+					/>
+					<TextareaControl
+						label={ __( 'Rubric', 'lesson-journal' ) }
+						help={ __( 'Grading notes visible to instructors.', 'lesson-journal' ) }
+						value={ rubric }
+						onChange={ ( val ) => onChange( { rubric: val } ) }
+						rows={ 3 }
+						__nextHasNoMarginBottom
+					/>
+				</>
+			) }
+
+			<ToggleControl
+				label={ __( 'Private', 'lesson-journal' ) }
+				help={ isPrivate
+					? __( 'Only the student can see their response.', 'lesson-journal' )
+					: __( 'Visible to instructors.', 'lesson-journal' )
+				}
+				checked={ isPrivate }
+				disabled={ graded }
+				onChange={ ( val ) => {
+					onChange( { isPrivate: val } );
+					if ( val ) onChange( { graded: false } );
+				} }
 			/>
 
 			<div className="ldj-create-actions">
@@ -299,6 +423,10 @@ registerBlockType( 'ldj/prompt', {
 		const [ formRequired, setFormRequired ] = useState( false );
 		const [ formMinChars, setFormMinChars ] = useState( 0 );
 		const [ formMaxChars, setFormMaxChars ] = useState( 0 );
+		const [ formGraded, setFormGraded ] = useState( false );
+		const [ formPrivate, setFormPrivate ] = useState( false );
+		const [ formPromptValue, setFormPromptValue ] = useState( 10 );
+		const [ formRubric, setFormRubric ] = useState( '' );
 
 		useEffect( () => {
 			apiFetch( { path: '/wp/v2/ldj-prompts?per_page=100&status=publish' } )
@@ -340,6 +468,10 @@ registerBlockType( 'ldj/prompt', {
 			setFormRequired( false );
 			setFormMinChars( 0 );
 			setFormMaxChars( 0 );
+			setFormGraded( false );
+			setFormPrivate( false );
+			setFormPromptValue( 10 );
+			setFormRubric( '' );
 		}
 
 		function handleFormChange( updates ) {
@@ -351,6 +483,10 @@ registerBlockType( 'ldj/prompt', {
 			if ( 'required' in updates ) setFormRequired( updates.required );
 			if ( 'minChars' in updates ) setFormMinChars( updates.minChars );
 			if ( 'maxChars' in updates ) setFormMaxChars( updates.maxChars );
+			if ( 'graded' in updates ) setFormGraded( updates.graded );
+			if ( 'isPrivate' in updates ) setFormPrivate( updates.isPrivate );
+			if ( 'promptValue' in updates ) setFormPromptValue( updates.promptValue );
+			if ( 'rubric' in updates ) setFormRubric( updates.rubric );
 		}
 
 		function createPrompt() {
@@ -359,6 +495,7 @@ registerBlockType( 'ldj/prompt', {
 			setSaving( true );
 			setError( '' );
 
+			const finalRequired = formGraded || formRequired;
 			apiFetch( {
 				path: '/wp/v2/ldj-prompts',
 				method: 'POST',
@@ -370,9 +507,13 @@ registerBlockType( 'ldj/prompt', {
 						_ldj_description: formDescription,
 						_ldj_rows: formRows,
 						_ldj_placeholder: formPlaceholder,
-						_ldj_required: formRequired,
-						_ldj_min_chars: formRequired ? Math.max( 1, formMinChars ) : 0,
+						_ldj_required: finalRequired,
+						_ldj_min_chars: finalRequired ? Math.max( 1, formMinChars ) : 0,
 						_ldj_max_chars: formMaxChars,
+						_ldj_graded: formGraded,
+						_ldj_private: formGraded ? false : formPrivate,
+						_ldj_prompt_value: formPromptValue,
+						_ldj_rubric: formRubric,
 					},
 				},
 			} )
@@ -516,6 +657,10 @@ registerBlockType( 'ldj/prompt', {
 						required={ formRequired }
 						minChars={ formMinChars }
 						maxChars={ formMaxChars }
+						graded={ formGraded }
+						isPrivate={ formPrivate }
+						promptValue={ formPromptValue }
+						rubric={ formRubric }
 						onChange={ handleFormChange }
 						onSave={ createPrompt }
 						saving={ saving }
