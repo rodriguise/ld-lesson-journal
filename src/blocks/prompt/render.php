@@ -69,18 +69,19 @@ $has_entry  = ! empty( $entry_text );
 			<?php if ( $max_chars > 0 ) : ?>maxlength="<?php echo esc_attr( $max_chars ); ?>"<?php endif; ?>
 		><?php echo esc_textarea( $entry_text ); ?></textarea>
 
-		<div class="ldj-char-count">
-			<span class="ldj-current-chars"><?php echo mb_strlen( $entry_text ); ?></span><?php if ( $max_chars > 0 ) : ?> / <?php echo esc_html( $max_chars ); ?><?php endif; ?>
-			<?php if ( $min_chars > 0 ) : ?>
-				<span class="ldj-min-chars-label"><?php printf( esc_html__( '(min %d)', 'lesson-journal' ), $min_chars ); ?></span>
+		<div class="ldj-char-info">
+			<div class="ldj-char-count">
+				<span class="ldj-current-chars"><?php echo mb_strlen( $entry_text ); ?></span><?php if ( $max_chars > 0 ) : ?> / <?php echo esc_html( $max_chars ); ?><?php endif; ?>
+				<?php if ( $min_chars > 0 ) : ?>
+					<span class="ldj-min-chars-label"><?php printf( esc_html__( '(min %d)', 'lesson-journal' ), $min_chars ); ?></span>
+				<?php endif; ?>
+			</div>
+			<?php if ( $description ) : ?>
+				<p class="ldj-prompt-description"><?php echo esc_html( ucfirst( $description ) ); ?></p>
 			<?php endif; ?>
 		</div>
 
 	</div>
-
-	<?php if ( $description ) : ?>
-		<p class="ldj-prompt-description"><?php echo esc_html( ucfirst( $description ) ); ?></p>
-	<?php endif; ?>
 
 	<?php
 	$is_graded_prompt = (bool) get_post_meta( $prompt_id, '_ldj_graded', true );

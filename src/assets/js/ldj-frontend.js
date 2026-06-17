@@ -319,8 +319,8 @@
 		var lessonId = group.dataset.lessonId;
 		var prompts  = group.querySelectorAll( '.ldj-prompt-wrap' );
 		var feedback = group.querySelector( '.ldj-feedback' );
-		var entries  = [];
-		var errors   = [];
+		var entries      = [];
+		var firstBadWrap = null;
 
 		prompts.forEach( function ( wrap ) {
 			var textarea     = wrap.querySelector( '.ldj-textarea' );
@@ -331,10 +331,7 @@
 			var minChars = textareaWrap ? parseInt( textareaWrap.dataset.minChars, 10 ) || 0 : 0;
 
 			if ( minChars > 0 && text.length < minChars ) {
-				errors.push( minChars === 1
-					? ldjData.i18n.promptRequired
-					: ldjData.i18n.promptMinChars.replace( '%d', minChars )
-				);
+				if ( ! firstBadWrap ) firstBadWrap = wrap;
 			}
 
 			entries.push( {
@@ -343,8 +340,24 @@
 			} );
 		} );
 
-		if ( errors.length > 0 ) {
-			showFeedback( feedback, errors[0], 'error' );
+		if ( firstBadWrap ) {
+			var minChars = parseInt( ( firstBadWrap.querySelector( '.ldj-textarea-wrap' ) || {} ).dataset?.minChars, 10 ) || 0;
+			var msg = minChars <= 1 ? ldjData.i18n.promptRequired : ldjData.i18n.promptMinChars.replace( '%d', minChars );
+			showFeedback( feedback, msg, 'error' );
+
+			var accItem = firstBadWrap.closest( '.ldj-accordion-item' );
+			if ( accItem && ! accItem.classList.contains( 'ldj-accordion-item--open' ) ) {
+				group.querySelectorAll( '.ldj-accordion-item--open' ).forEach( function ( o ) {
+					o.classList.remove( 'ldj-accordion-item--open' );
+				} );
+				accItem.classList.add( 'ldj-accordion-item--open' );
+			}
+
+			var ta = firstBadWrap.querySelector( '.ldj-textarea' );
+			if ( ta ) {
+				ta.scrollIntoView( { behavior: 'smooth', block: 'center' } );
+				setTimeout( function () { ta.focus(); }, 300 );
+			}
 			return;
 		}
 

@@ -66,11 +66,22 @@
 	box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
 }
 
-.ldj-char-count {
+.ldj-char-info {
+	display: flex;
+	justify-content: flex-end;
+	align-items: baseline;
+	gap: 1em;
 	margin-top: 0.25em;
+}
+
+.ldj-char-info .ldj-prompt-description {
+	order: -1;
+	margin-right: auto;
+}
+
+.ldj-char-count {
 	font-size: 0.8em;
 	color: #9ca3af;
-	text-align: right;
 }
 
 .ldj-chars-below-min {
@@ -84,7 +95,7 @@
 /* === Prompt Description Label === */
 
 .ldj-prompt-description {
-	margin: 0.15em 0 0;
+	margin: 0;
 	font-size: 0.78em;
 	color: #9ca3af;
 	font-style: italic;
@@ -620,6 +631,11 @@
 
 .ldj-accordion-header:hover {
 	background: #f9fafb;
+	color: #1f2937;
+}
+
+.ldj-accordion-header:hover span {
+	color: #1f2937;
 }
 
 .ldj-accordion-chevron {
@@ -634,7 +650,7 @@
 
 .ldj-accordion-body {
 	display: none;
-	padding: 0 1em 1em;
+	padding: 0.75em 1em 1em;
 }
 
 .ldj-accordion-item--open > .ldj-accordion-body {
