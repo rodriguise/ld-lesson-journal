@@ -360,7 +360,7 @@ class LDJ_Journal_Shortcode {
 		$output .= '<button type="button" class="ldj-journal-next">' . esc_html__( 'Next', 'lesson-journal' ) . ' &rarr;</button>';
 		$output .= '</div>';
 		$output .= '<div class="ldj-journal-actions">';
-		$output .= '<label class="ldj-private-toggle"><input type="checkbox" class="ldj-include-private-cb"> ' . esc_html__( 'Include private entries in print/download', 'lesson-journal' ) . '</label>';
+		$output .= '<label class="ldj-private-toggle" title="' . esc_attr__( 'If checked, your private entries will be included in print and download.', 'lesson-journal' ) . '"><input type="checkbox" class="ldj-include-private-cb"> ' . esc_html__( 'Include Private', 'lesson-journal' ) . '</label>';
 		if ( $show_refresh ) {
 			$output .= '<button type="button" class="ldj-journal-refresh-btn" title="' . esc_attr__( 'Refresh', 'lesson-journal' ) . '">';
 			if ( $is_text ) {

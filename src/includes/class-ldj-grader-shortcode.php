@@ -507,12 +507,11 @@ class LDJ_Grader_Shortcode {
 				echo ' <button type="button" class="ldj-grader-btn ldj-grade-btn" data-grade-type="score">' . esc_html__( 'Set Score', 'lesson-journal' ) . '</button>';
 				if ( $entry->grade_status ) {
 					echo ' <button type="button" class="ldj-grader-btn ldj-grade-btn ldj-grade-clear" data-grade-type="clear">' . esc_html__( 'Clear Grade', 'lesson-journal' ) . '</button>';
+					if ( empty( $entry->reopened ) ) {
+						echo ' <button type="button" class="ldj-grader-btn ldj-reopen-btn">' . esc_html__( 'Re-Open', 'lesson-journal' ) . '</button>';
+					}
 				}
 				echo '</div>';
-
-				if ( $entry->grade_status && empty( $entry->reopened ) ) {
-					echo '<button type="button" class="ldj-grader-btn ldj-reopen-btn">' . esc_html__( 'Re-open for Editing', 'lesson-journal' ) . '</button>';
-				}
 
 				echo '</div>';
 			}

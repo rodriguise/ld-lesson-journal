@@ -11,6 +11,7 @@
 		initJournalViews();
 		initJournalEntryActions();
 		initSubmitStates();
+		initNumberedPrompts();
 	} );
 
 	function initCharCounters() {
@@ -57,6 +58,33 @@
 		} );
 
 		btn.disabled = ! anyNeedsSubmit;
+	}
+
+	function initNumberedPrompts() {
+		document.querySelectorAll( '.ldj-group--numbered' ).forEach( function ( group ) {
+			var wraps = group.querySelectorAll( ':scope > .ldj-prompt-wrap' );
+			wraps.forEach( function ( wrap, i ) {
+				var promptText = wrap.querySelector( '.ldj-prompt-text' );
+				if ( ! promptText ) return;
+
+				var target = promptText.querySelector( 'h1, h2, h3, h4, h5, h6, p' );
+				if ( ! target || ! target.textContent.trim() ) {
+					var all = promptText.querySelectorAll( 'h1, h2, h3, h4, h5, h6, p' );
+					for ( var j = 0; j < all.length; j++ ) {
+						if ( all[ j ].textContent.trim() ) {
+							target = all[ j ];
+							break;
+						}
+					}
+				}
+				if ( ! target ) return;
+
+				var num = document.createElement( 'span' );
+				num.className = 'ldj-prompt-number';
+				num.textContent = ( i + 1 ) + '. ';
+				target.insertBefore( num, target.firstChild );
+			} );
+		} );
 	}
 
 	function initGroupSaveButtons() {
@@ -350,7 +378,7 @@
 				if ( data.success ) {
 					showFeedback( feedback, ldjData.i18n.saved, 'success' );
 					switchToCompletedDisplay( group );
-					updateMarkComplete( required, true );
+					updateMarkComplete( group.dataset.required === '1', true );
 					document.dispatchEvent( new CustomEvent( 'ldj:entries-changed' ) );
 				} else {
 					showFeedback( feedback, data.data?.message || ldjData.i18n.error, 'error' );
@@ -863,6 +891,10 @@
 				el.remove();
 			} );
 		}
+
+		clone.querySelectorAll( '.ldj-journal-entry-actions, .ldj-journal-edit-form' ).forEach( function ( el ) {
+			el.remove();
+		} );
 
 		var printHeader = clone.querySelector( '.ldj-journal-print-header' );
 		if ( printHeader ) printHeader.style.display = 'flex';

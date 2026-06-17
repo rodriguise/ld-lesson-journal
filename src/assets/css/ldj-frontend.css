@@ -16,16 +16,7 @@
 
 /* === Numbered Prompts === */
 
-.ldj-group--numbered {
-	counter-reset: ldj-prompt;
-}
-
-.ldj-group--numbered > .ldj-prompt-wrap {
-	counter-increment: ldj-prompt;
-}
-
-.ldj-group--numbered > .ldj-prompt-wrap > .ldj-prompt-text::before {
-	content: counter(ldj-prompt) ". ";
+.ldj-prompt-number {
 	font-weight: 600;
 }
 
@@ -564,10 +555,34 @@
 	background: #fffbeb;
 }
 
+.ldj-prompt-badge--graded {
+	color: #065f46;
+	border-color: #6ee7b7;
+	background: #ecfdf5;
+}
+
 .ldj-prompt-badge--private {
 	color: #1e40af;
 	border-color: #93c5fd;
 	background: #eff6ff;
+}
+
+.ldj-prompt-badge--outstanding {
+	color: #065f46;
+	border-color: #6ee7b7;
+	background: #ecfdf5;
+}
+
+.ldj-prompt-badge--satisfactory {
+	color: #1e40af;
+	border-color: #93c5fd;
+	background: #eff6ff;
+}
+
+.ldj-prompt-badge--insufficient {
+	color: #991b1b;
+	border-color: #fca5a5;
+	background: #fef2f2;
 }
 
 /* === Accordion === */
@@ -1015,7 +1030,7 @@
 }
 
 .ldj-grader .ldj-reopen-btn {
-	margin-top: 0.5em;
+	margin-left: 0.25em;
 }
 
 .ldj-grader .ldj-grade-score {
@@ -1212,8 +1227,8 @@
 	}
 }
 
-/* Graded badge rubric popup */
-.ldj-prompt-badge--graded.ldj-has-popup {
+/* Badge popup */
+.ldj-has-popup {
 	position: relative;
 	cursor: help;
 }
@@ -1241,6 +1256,7 @@
 }
 
 .ldj-has-popup:hover .ldj-badge-popup,
+.ldj-has-popup:focus .ldj-badge-popup,
 .ldj-has-popup:focus-within .ldj-badge-popup {
 	display: block;
 }
@@ -1249,6 +1265,19 @@
 	display: block;
 	margin-bottom: 4px;
 }
+
+.ldj-badge-popup-status {
+	display: inline-block;
+	font-size: 0.85em;
+	font-weight: 600;
+	margin-bottom: 6px;
+}
+
+.ldj-badge-popup-status--outstanding { color: #065f46; }
+.ldj-badge-popup-status--satisfactory { color: #1e40af; }
+.ldj-badge-popup-status--insufficient,
+.ldj-badge-popup-status--redo,
+.ldj-badge-popup-status--fail { color: #991b1b; }
 
 /* Private toggle in journal toolbar */
 .ldj-private-toggle {
@@ -1265,9 +1294,14 @@
 	margin: 0;
 }
 
-/* Hide private entries in print when toggle is off */
+/* Hide interactive elements and private entries in print */
 @media print {
 	.ldj-hide-private .ldj-journal-entry--private {
+		display: none !important;
+	}
+
+	.ldj-journal-entry-actions,
+	.ldj-journal-edit-form {
 		display: none !important;
 	}
 }

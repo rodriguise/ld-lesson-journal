@@ -55,22 +55,6 @@ $has_entry  = ! empty( $entry_text );
 			<?php if ( ! $is_locked || $is_reopened ) : ?>
 				<button type="button" class="ldj-edit-entry"><?php esc_html_e( 'Edit', 'lesson-journal' ); ?></button>
 				<button type="button" class="ldj-delete-entry"><?php esc_html_e( 'Delete', 'lesson-journal' ); ?></button>
-			<?php else : ?>
-				<?php
-				$prompt_value = (int) get_post_meta( $prompt_id, '_ldj_prompt_value', true ) ?: 10;
-				$rubric_text  = get_post_meta( $prompt_id, '_ldj_rubric', true );
-				?>
-				<span class="ldj-prompt-badge ldj-prompt-badge--graded ldj-has-popup">
-					<?php esc_html_e( '(Graded)', 'lesson-journal' ); ?>
-					<span class="ldj-badge-popup">
-						<strong><?php printf( esc_html__( 'Possible Points: %d', 'lesson-journal' ), $prompt_value ); ?></strong>
-						<?php if ( $rubric_text ) : ?>
-							<?php echo wp_kses_post( wpautop( $rubric_text ) ); ?>
-						<?php else : ?>
-							<em><?php esc_html_e( 'No rubric provided.', 'lesson-journal' ); ?></em>
-						<?php endif; ?>
-					</span>
-				</span>
 			<?php endif; ?>
 		</div>
 	<?php endif; ?>
@@ -99,14 +83,61 @@ $has_entry  = ! empty( $entry_text );
 	<?php endif; ?>
 
 	<?php
-	$is_private = (bool) get_post_meta( $prompt_id, '_ldj_private', true );
-	if ( $required || $is_private ) : ?>
+	$is_graded_prompt = (bool) get_post_meta( $prompt_id, '_ldj_graded', true );
+	$is_private       = (bool) get_post_meta( $prompt_id, '_ldj_private', true );
+
+	if ( $is_graded_prompt || $required || $is_private ) : ?>
 		<div class="ldj-prompt-meta">
+			<?php if ( $is_graded_prompt ) :
+				$prompt_value = (int) get_post_meta( $prompt_id, '_ldj_prompt_value', true ) ?: 10;
+				$rubric_text  = get_post_meta( $prompt_id, '_ldj_rubric', true );
+				$grade_status = $existing->grade_status ?? null;
+				$grade_score  = $existing->grade_score ?? null;
+				$grade_max    = $existing->grade_max ?? null;
+			?>
+				<span class="ldj-prompt-badge ldj-prompt-badge--graded ldj-has-popup" tabindex="0">
+					<?php esc_html_e( 'Graded', 'lesson-journal' ); ?>
+					<span class="ldj-badge-popup">
+						<?php if ( $grade_status && $grade_score !== null ) : ?>
+							<strong><?php printf( esc_html__( 'Score: %s / %s', 'lesson-journal' ), esc_html( $grade_score ), esc_html( $grade_max ?: $prompt_value ) ); ?></strong>
+							<span class="ldj-badge-popup-status ldj-badge-popup-status--<?php echo esc_attr( $grade_status ); ?>">
+								<?php echo esc_html( ucfirst( $grade_status ) ); ?>
+							</span>
+						<?php else : ?>
+							<strong><?php printf( esc_html__( 'Possible Points: %d', 'lesson-journal' ), $prompt_value ); ?></strong>
+						<?php endif; ?>
+						<?php if ( $rubric_text ) : ?>
+							<?php echo wp_kses_post( wpautop( $rubric_text ) ); ?>
+						<?php endif; ?>
+					</span>
+				</span>
+				<?php if ( $grade_status ) :
+					$status_label = ucfirst( $grade_status );
+					if ( in_array( $grade_status, array( 'redo', 'fail' ), true ) ) {
+						$status_label = __( 'Insufficient', 'lesson-journal' );
+					}
+					$status_class = $grade_status;
+					if ( in_array( $grade_status, array( 'redo', 'fail' ), true ) ) {
+						$status_class = 'insufficient';
+					}
+					$instructor_comment = $existing->instructor_comment ?? '';
+				?>
+					<span class="ldj-prompt-badge ldj-prompt-badge--status ldj-prompt-badge--<?php echo esc_attr( $status_class ); ?><?php echo $instructor_comment ? ' ldj-has-popup' : ''; ?>"<?php echo $instructor_comment ? ' tabindex="0"' : ''; ?>>
+						<?php echo esc_html( $status_label ); ?>
+						<?php if ( $instructor_comment ) : ?>
+							<span class="ldj-badge-popup"><?php echo esc_html( $instructor_comment ); ?></span>
+						<?php endif; ?>
+					</span>
+				<?php endif; ?>
+			<?php endif; ?>
 			<?php if ( $required ) : ?>
 				<span class="ldj-prompt-badge ldj-prompt-badge--required"><?php esc_html_e( 'Required', 'lesson-journal' ); ?></span>
 			<?php endif; ?>
 			<?php if ( $is_private ) : ?>
-				<span class="ldj-prompt-badge ldj-prompt-badge--private" title="<?php esc_attr_e( 'Instructors and admins cannot see this response — it is for your use only.', 'lesson-journal' ); ?>"><?php esc_html_e( 'Private', 'lesson-journal' ); ?></span>
+				<span class="ldj-prompt-badge ldj-prompt-badge--private ldj-has-popup" tabindex="0">
+					<?php esc_html_e( 'Private', 'lesson-journal' ); ?>
+					<span class="ldj-badge-popup"><?php esc_html_e( 'Instructors and admins cannot see this response — it is for your use only.', 'lesson-journal' ); ?></span>
+				</span>
 			<?php endif; ?>
 		</div>
 	<?php endif; ?>

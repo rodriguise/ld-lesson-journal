@@ -391,14 +391,15 @@ class LDJ_Entry {
 		$result = $wpdb->update(
 			LDJ_DB::table_name(),
 			array(
-				'grade_status' => null,
-				'grade_score'  => null,
-				'grade_max'    => null,
-				'graded_by'    => null,
-				'graded_at'    => null,
+				'grade_status'       => null,
+				'grade_score'        => null,
+				'grade_max'          => null,
+				'graded_by'          => null,
+				'graded_at'          => null,
+				'instructor_comment' => null,
 			),
 			array( 'id' => $entry_id ),
-			array( null, null, null, null, null ),
+			array( null, null, null, null, null, null ),
 			array( '%d' )
 		);
 

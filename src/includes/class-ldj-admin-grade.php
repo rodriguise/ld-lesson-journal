@@ -338,11 +338,10 @@ class LDJ_Admin_Grade {
 				printf( ' / %d', $prompt_value );
 				echo ' <button type="button" class="button ldj-grade-btn" data-grade-type="score">' . esc_html__( 'Set Score', 'lesson-journal' ) . '</button>';
 				echo ' <button type="button" class="button ldj-grade-btn ldj-grade-clear" data-grade-type="clear">' . esc_html__( 'Clear Grade', 'lesson-journal' ) . '</button>';
-				echo '</div>';
-
 				if ( $entry->grade_status && empty( $entry->reopened ) ) {
-					echo '<button type="button" class="button ldj-reopen-btn">' . esc_html__( 'Re-open for Editing', 'lesson-journal' ) . '</button>';
+					echo ' <button type="button" class="button ldj-reopen-btn">' . esc_html__( 'Re-Open', 'lesson-journal' ) . '</button>';
 				}
+				echo '</div>';
 
 				echo '</div>';
 			}
